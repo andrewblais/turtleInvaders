@@ -66,7 +66,7 @@ https://elgoog.im/space-invaders/
 
 ### My Submission:
 
-My project is viewable here: https://github.com/andrewblais/uapInvasion
+My project is viewable here: https://github.com/andrewblais/turtleInvaders
 
 ---
 

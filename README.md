@@ -1,5 +1,7 @@
 # Turtle Invaders
 
+## Project in progress.
+
 A class to...
 
 - [Python](https://www.python.org/)
@@ -9,6 +11,8 @@ A class to...
 - [PythonTurtle GitHub](https://github.com/PythonTurtle/PythonTurtle)
 
 - [PythonTurtle Documentation](https://docs.python.org/3/library/turtle.html)
+
+- [screeninfo](https://github.com/rr-/screeninfo)
 
 _MIT License: Copyright (c) 2024- Andrew Blais_
 

@@ -8,7 +8,13 @@ from util.util import *
 
 
 class TurtleInvaders:
-    def __init__(self):
+    def __init__(self,
+                 turtle_march_speed: int | float = 1.5,
+                 turtle_march_speed_increase: int | float = .75,
+                 turtle_movement_vert: int = 10,
+                 cannon_reload_time: int = 1000,
+                 uap_flyby_speed: int = 5,
+                 cannon_projectile_speed: int = 20):
         self.screen = None
         self.formation_div_x = 6
         self.formation_div_y = 4
@@ -22,9 +28,9 @@ class TurtleInvaders:
         self.formation_gutter_factor = .7  # Smaller val for bigger L-R gutters
         self.turtle_grid_width = 208
         self.turtle_grid_height = 208
-        self.player = None
-        self.player_start_x = -2
-        self.player_start_y = -350
+        self.cannon = None
+        self.cannon_start_x = -2
+        self.cannon_start_y = -350
         self.turtle_positions = []
         self.all_turtles = []
         self.score_object = None
@@ -35,22 +41,30 @@ class TurtleInvaders:
         self.uap_x = 0
         self.uap_y = 0
         self.round_number = 1
-        self.time_tracker = 0
-        self.uap_sec_low = 1000
-        self.uap_sec_high = 3000
-        self.uap_freq = random.randint(self.uap_sec_low, self.uap_sec_high) * .01
-        # self.uap_freq = 500 * .01  # More frequent UAPs for testing
-        self.turtle_march_speed = -5
+        self.uap_freq_tracker = 0
+        # w/tracer set to 10, a uap_freq of 1000 means about a 3 second UAP delay:
+        self.uap_freq_low = 2500
+        self.uap_freq_high = 700
+        # Allows variation in UAP frequency of range ~7 to ~20 seconds w/`tracer(10)`:
+        self.uap_freq = random.randint(self.uap_freq_low, self.uap_freq_high) * .01
+        self.turtle_march_speed = turtle_march_speed
+        self.turtle_march_speed_increase = turtle_march_speed_increase
+        self.turtle_movement_vert = turtle_movement_vert
+        self.uap_flyby_speed = uap_flyby_speed
         self.turtles_have_reversed = False  # Flag indicating turtles have changed direction
         self.pause_game = False
         self.game_on = True
-        self.player_missiles = []
-        self.player_has_fired = False
-        # self.player_reload_time = random.randint(2000, 5000)
-        self.player_reload_time_init = 2000
-        self.player_reload_time = self.player_reload_time_init
+        self.cannon_missiles = []
+        self.cannon_has_fired = False
+        self.cannon_reload_time_init = cannon_reload_time
+        self.cannon_reload_time = self.cannon_reload_time_init
+        self.cannon_projectile_speed = cannon_projectile_speed
         self.turtles_to_pop_ind = []
+        self.shields = []
 
+    #  #  #  #  #  #
+    # SCREEN STUFF #
+    #  #  #  #  #  #
     def setup_screen(self):
         self.screen = Screen()
         self.screen.title("Turtle Invaders")
@@ -74,6 +88,56 @@ class TurtleInvaders:
         self.screen_width = self.screen.window_width()
         self.screen_height = self.screen.window_height()
 
+    #  #  #  #  #  #
+    # TURTLE STUFF #
+    #  #  #  #  #  #
+    @staticmethod
+    def get_turtle_row_index(number, round_number):
+        for key, value in TURTLE_COLOR_INDEX_DICT.items():
+            if number in key:
+                return (value + round_number) % len(TURTLE_COLORS)
+        raise ValueError(f"Number {number} not in any range key.")
+
+    def turtle_change_dir(self):
+        if self.turtle_march_speed < 1:
+            self.turtle_march_speed -= 1
+        else:
+            self.turtle_march_speed += 1
+        # self.turtle_march_speed *= -1
+        self.turtle_march_speed *= -self.turtle_march_speed_increase
+
+    def reset_turtle_flag(self):
+        self.turtles_have_reversed = False
+
+    def turtle_march(self):
+        right_limit = self.screen_width / 2
+        left_limit = -right_limit
+
+        min_turtle = min([i.xcor() for i in self.all_turtles])
+        max_turtle = max([i.xcor() for i in self.all_turtles])
+
+        if min_turtle - 30 < left_limit and not self.turtles_have_reversed:
+            self.turtle_change_dir()
+            turtle_movement_vert = self.turtle_movement_vert
+            self.turtles_have_reversed = True
+            self.screen.ontimer(self.reset_turtle_flag, 5)
+        elif max_turtle + 35 > right_limit and not self.turtles_have_reversed:
+            self.turtle_change_dir()
+            turtle_movement_vert = self.turtle_movement_vert
+            self.turtles_have_reversed = True
+            self.screen.ontimer(self.reset_turtle_flag, 5)
+        else:
+            turtle_movement_vert = 0
+
+        rand_dec = random.randint(50, 75) / 100
+        rand_stretch = 1 + rand_dec
+
+        for i in self.all_turtles:
+            self.uap_freq_tracker += .01
+            i.turtlesize(stretch_wid=rand_stretch, stretch_len=rand_stretch)
+            i.teleport(i.xcor() - self.turtle_march_speed,
+                       i.ycor() - turtle_movement_vert)
+
     def get_turtle_positions(self):
         self.turtle_formation_width = self.screen_width * self.formation_gutter_factor
         self.turtle_grid_width = self.turtle_formation_width / self.formation_div_x
@@ -95,9 +159,6 @@ class TurtleInvaders:
 
                 self.turtle_positions.append((pos_x, pos_y))
 
-    def player_reload_time_reset(self):
-        self.player_reload_time = self.player_reload_time_init
-
     def turtle_formation(self):
         for i in range(len(self.turtle_positions)):
             single_turtle = Turtle()
@@ -113,26 +174,102 @@ class TurtleInvaders:
             # For development only, to identify turtle indices easily:
             # turtle.write(i, align="center", font=("Source Sans 3 Black", 24, "italic"))
 
-    @staticmethod
-    def get_turtle_row_index(number, round_number):
-        for key, value in TURTLE_COLOR_INDEX_DICT.items():
-            if number in key:
-                return (value + round_number) % len(TURTLE_COLORS)
-        raise ValueError(f"Number {number} not in any range key.")
+    #  #  #  #  #  #
+    # CANNON STUFF #
+    #  #  #  #  #  #
+    def cannon_left(self):
+        if self.cannon.xcor() > -self.screen_width / 2 + 50:
+            x_pos = self.cannon.xcor() - 10
+            self.cannon.goto(x_pos, self.cannon.ycor())
 
-    def deploy_player(self):
-        self.player = Turtle()
-        self.player.shape('triangle')
-        self.player.turtlesize(stretch_wid=4, stretch_len=2, outline=5)
-        self.player.turtle_width = self.player.shapesize()[0]  # Get player width
-        self.player_start_x = -self.player.turtle_width / 2  # Center player
-        # Position player at comfortable y-coordinate:
-        self.player_start_y = -self.screen_height / 2 + self.screen_height / 15
-        self.player.color(PLAYER_COLOR)
-        self.player.penup()
-        self.player.setheading(90)
-        self.player.goto(self.player_start_x, self.player_start_y)
+    def cannon_right(self):
+        if self.cannon.xcor() < self.screen_width / 2 - 55:
+            x_pos = self.cannon.xcor() + 10
+            self.cannon.goto(x_pos, self.cannon.ycor())
 
+    def reset_cannon_has_fired_flag(self):
+        self.cannon_has_fired = False
+
+    def cannon_fire_missile(self):
+        if not self.cannon_has_fired:
+            cannon_missile = Turtle()
+            cannon_missile.shape('square')
+            cannon_missile.turtlesize(stretch_wid=.1, stretch_len=1.05, outline=2.5)
+            cannon_missile.penup()
+            cannon_missile.color(PLAYER_COLOR)
+            cannon_missile.setheading(90)
+            cannon_missile.goto(self.cannon.xcor(), self.cannon.ycor() + 35)
+            self.cannon_missiles.append(cannon_missile)
+            self.cannon_has_fired = True
+            self.screen.ontimer(self.reset_cannon_has_fired_flag,
+                                self.cannon_reload_time)
+
+    def cannon_missile_path(self):
+        for i in self.cannon_missiles:
+            cannon_x, cannon_y = i.xcor(), i.ycor()
+            i.goto(cannon_x, cannon_y + self.cannon_projectile_speed)
+            if cannon_y > self.screen_height / 2:
+                self.cannon_missiles.pop(self.cannon_missiles.index(i))
+            else:
+                for j in self.all_turtles:
+                    if are_collision_x_y_cond_met(j, i, 15, 10):
+                        self.score_current += 10
+                        self.update_scoreboard()
+                        i.goto(-1500, 0)
+                        j.goto(-1500, 0)
+                        self.cannon_missiles.pop(self.cannon_missiles.index(i))
+                        self.all_turtles.pop(self.all_turtles.index(j))
+                if are_collision_x_y_cond_met(self.uap, i, 35, 15):
+                    i.goto(-1500, 0)
+                    self.cannon_missiles.pop(self.cannon_missiles.index(i))
+                    self.score_current += 50
+                    self.update_scoreboard()
+                    self.uap_x = self.screen_width / 2 + 50
+                    self.uap.teleport(self.uap_x, self.uap_y)
+                    # Bonus rapid fire for UAP hit:
+                    self.cannon_reload_time = int(self.cannon_reload_time * .5)
+                    self.screen.ontimer(self.cannon_reload_time_reset, 5000)
+                    self.uap_freq_tracker = 0
+                    self.uap_freq = random.randint(self.uap_freq_low,
+                                                   self.uap_freq_high) * .01
+
+    def cannon_reload_time_reset(self):
+        self.cannon_reload_time = self.cannon_reload_time_init
+
+    def deploy_cannon(self):
+        self.cannon = Turtle()
+        self.cannon.shape('triangle')
+        self.cannon.turtlesize(stretch_wid=4, stretch_len=2, outline=5)
+        self.cannon.turtle_width = self.cannon.shapesize()[0]  # Get cannon width
+        self.cannon_start_x = -self.cannon.turtle_width / 2  # Center cannon
+        # Position cannon at comfortable y-coordinate:
+        self.cannon_start_y = -self.screen_height / 2 + self.screen_height / 15
+        self.cannon.color(PLAYER_COLOR)
+        self.cannon.penup()
+        self.cannon.setheading(90)
+        self.cannon.goto(self.cannon_start_x, self.cannon_start_y)
+
+    #  #  #  #  #  #
+    # SHIELD STUFF #
+    #  #  #  #  #  #
+    def fortify_shields(self):
+        shield_y = -self.screen_height / 2 + self.screen_height / 5.5
+        lr_spacing = {0: -75, 1: 0, 2: 75}
+        for i in range(3):
+            shield = Turtle()
+            shield.penup()
+            shield.setheading(90)
+            shield.shape('classic')
+            shield.turtlesize(stretch_wid=20, stretch_len=4, outline=10)
+            shield.color(PLAYER_COLOR)
+            shild_grid_div = self.screen_width / 4 * (i + 1) + lr_spacing[i]
+            shield_x = -self.screen_width / 2 + shild_grid_div
+            shield.goto(shield_x, shield_y)
+            self.shields.append(shield)
+
+    #  #  #   #  #  #  #
+    # SCOREBOARD STUFF #
+    #  #  #   #  #  #  #
     def inititalize_score(self):
         self.score_object = Turtle()
         self.score_object.penup()
@@ -160,7 +297,21 @@ class TurtleInvaders:
                                 align="center",
                                 font=("Source Sans 3 Black", 32, "italic"))
 
-    # 'arrow', 'turtle', 'circle', 'square', 'triangle', 'classic'
+    def update_scoreboard(self):
+        self.score_object.clear()
+        self.score_object.penup()
+        self.score_object.hideturtle()
+        self.score_object.color(PLAYER_COLOR)
+        pos_x = -self.screen_width / 2 + self.screen_width / 20
+        pos_y = self.screen_height / 2 - self.screen_height / 15
+        self.score_object.goto(pos_x, pos_y)
+        self.score_object.write(f"{self.score_current:04d}",
+                                align="center",
+                                font=("Source Sans 3 Black", 32, "italic"))
+
+    #  #  #  #  #
+    # UAP STUFF #
+    #  #  #  #  #
     def uap_sighting(self):
         self.uap = Turtle()
         self.uap.penup()
@@ -184,87 +335,21 @@ class TurtleInvaders:
         self.uap.goto(self.uap_x, self.uap_y)
 
     def uap_flyby(self):
-        # print(self.time_tracker, self.uap_freq)
-        if self.time_tracker > self.uap_freq:
+        # print(self.uap_freq_tracker, self.uap_freq)  # Uncomment for development/testing
+        if self.uap_freq_tracker > self.uap_freq:
             if self.uap_x > -self.screen_width / 2 - 50:
-                self.uap_x -= 10
+                self.uap_x -= self.uap_flyby_speed
                 self.uap.teleport(self.uap_x, self.uap_y)
             else:
                 self.uap_x = self.screen_width / 2 + 50
                 self.uap.teleport(self.uap_x, self.uap_y)
-                self.time_tracker = 0
-                self.uap_freq = random.randint(self.uap_sec_low, self.uap_sec_high) * .01
+                self.uap_freq_tracker = 0
+                self.uap_freq = random.randint(self.uap_freq_low,
+                                               self.uap_freq_high) * .01
 
-    def player_left(self):
-        if self.player.xcor() > -self.screen_width / 2 + 50:
-            x_pos = self.player.xcor() - 10
-            self.player.goto(x_pos, self.player.ycor())
-
-    def player_right(self):
-        if self.player.xcor() < self.screen_width / 2 - 55:
-            x_pos = self.player.xcor() + 10
-            self.player.goto(x_pos, self.player.ycor())
-
-    def reset_player_has_fired_flag(self):
-        self.player_has_fired = False
-
-    def player_fire_missile(self):
-        if not self.player_has_fired:
-            player_missile = Turtle()
-            player_missile.shape('square')
-            player_missile.turtlesize(stretch_wid=.1, stretch_len=1.05, outline=2.5)
-            player_missile.penup()
-            player_missile.color(PLAYER_COLOR)
-            player_missile.setheading(90)
-            player_missile.goto(self.player.xcor(), self.player.ycor() + 35)
-            self.player_missiles.append(player_missile)
-            self.player_has_fired = True
-            self.screen.ontimer(self.reset_player_has_fired_flag,
-                                self.player_reload_time)
-
-    def player_missile_path(self):
-        for i in self.player_missiles:
-            player_x, player_y = i.xcor(), i.ycor()
-            i.goto(player_x, player_y + 30)
-            if player_y > self.screen_height / 2:
-                self.player_missiles.pop(self.player_missiles.index(i))
-            else:
-                for j in self.all_turtles:
-                    if are_collision_x_y_cond_met(j, i, 15, 15):
-                        self.score_current += 10
-                        self.update_scoreboard()
-                        i.goto(-1500, 0)
-                        j.goto(-1500, 0)
-                        self.player_missiles.pop(self.player_missiles.index(i))
-                        self.all_turtles.pop(self.all_turtles.index(j))
-                if are_collision_x_y_cond_met(self.uap, i, 50, 25):
-                    i.goto(-1500, 0)
-                    self.player_missiles.pop(self.player_missiles.index(i))
-                    self.score_current += 50
-                    self.update_scoreboard()
-                    self.uap_x = self.screen_width / 2 + 50
-                    self.uap.teleport(self.uap_x, self.uap_y)
-                    self.player_reload_time = 1000  # Bonus rapid fire for UAP hit
-                    self.screen.ontimer(self.player_reload_time_reset, 5000)
-                    self.time_tracker = 0
-                    self.uap_freq = random.randint(self.uap_sec_low,
-                                                   self.uap_sec_high) * .01
-
-    def update_scoreboard(self):
-        self.score_object.clear()
-        self.score_object.penup()
-        self.score_object.hideturtle()
-        self.score_object.color(PLAYER_COLOR)
-        pos_x = -self.screen_width / 2 + self.screen_width / 20
-        pos_y = self.screen_height / 2 - self.screen_height / 15
-        self.score_object.goto(pos_x, pos_y)
-        self.score_object.write(f"{self.score_current:04d}",
-                                align="center",
-                                font=("Source Sans 3 Black", 32, "italic"))
-
-    def check_player_destroyed(self):
-        pass
-
+    #  #   #  #   #  #
+    # GAME UTILITIES #
+    #  #   #  #   #  #
     def restart_game(self):
         self.screen.clear()
         self.__init__()
@@ -276,54 +361,12 @@ class TurtleInvaders:
     def key_listeners(self):
         """Creates key listeners for movement/pause_toggle/quit_game/restart_game methods."""
         self.screen.listen()
-        self.screen.onkeypress(self.player_fire_missile, 'space')
-        self.screen.onkeypress(self.player_left, 'Left')
-        self.screen.onkeypress(self.player_right, 'Right')
+        self.screen.onkeypress(self.cannon_fire_missile, 'space')
+        self.screen.onkeypress(self.cannon_left, 'Left')
+        self.screen.onkeypress(self.cannon_right, 'Right')
         self.screen.onkeypress(self.pause_toggle, 'p')
         self.screen.onkeypress(self.quit_game, 'q')
         self.screen.onkeypress(self.restart_game, 'r')
-
-    def turtle_change_dir(self):
-        if self.turtle_march_speed < 1:
-            self.turtle_march_speed -= 1
-        else:
-            self.turtle_march_speed += 1
-        self.turtle_march_speed *= -1
-
-    def reset_turtle_flag(self):
-        self.turtles_have_reversed = False
-
-    def turtle_march(self):
-        right_limit = self.screen_width / 2
-        left_limit = -right_limit
-
-        min_turtle = min([i.xcor() for i in self.all_turtles])
-        max_turtle = max([i.xcor() for i in self.all_turtles])
-
-        if min_turtle - 30 < left_limit and not self.turtles_have_reversed:
-            self.turtle_change_dir()
-            turtle_movement_vert = -10
-            self.turtles_have_reversed = True
-            self.screen.ontimer(self.reset_turtle_flag, 5)
-        elif max_turtle + 35 > right_limit and not self.turtles_have_reversed:
-            self.turtle_change_dir()
-            turtle_movement_vert = -10
-            self.turtles_have_reversed = True
-            self.screen.ontimer(self.reset_turtle_flag, 5)
-        else:
-            turtle_movement_vert = 0
-
-        rand_dec = random.randint(50, 75) / 100
-        rand_stretch = 1 + rand_dec
-
-        for i in self.all_turtles:
-            self.time_tracker += .01
-            i.turtlesize(stretch_wid=rand_stretch, stretch_len=rand_stretch)
-            i.teleport(i.xcor() + self.turtle_march_speed,
-                       i.ycor() + turtle_movement_vert)
-
-    def check_turtle_destroyed(self):
-        pass
 
     def quit_game(self):
         self.screen.bye()
@@ -333,7 +376,8 @@ class TurtleInvaders:
         self.inititalize_lives()
         self.get_turtle_positions()
         self.turtle_formation()
-        self.deploy_player()
+        self.deploy_cannon()
+        self.fortify_shields()
         self.uap_sighting()
 
     def begin_invasion(self):
@@ -341,14 +385,15 @@ class TurtleInvaders:
         self.screen.tracer(0)
         self.get_screen_width()
         self.setup_pieces()
-        self.screen.tracer(2)
+        # self.screen.tracer(2)
+        self.screen.tracer(10)
         self.key_listeners()
         while self.lives_left > 0:
             while self.game_on:
                 if not self.pause_game:
                     self.screen.update()
                     self.turtle_march()
-                    self.player_missile_path()
+                    self.cannon_missile_path()
                     self.uap_flyby()
                 else:
                     self.screen.update()

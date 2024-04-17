@@ -4,26 +4,7 @@ from screeninfo import get_monitors
 import sys
 
 from config.config import *
-
-
-def is_collision_x_cond_met(obj, missile, space):
-    obj_x = obj.xcor()
-    obj_w = obj.shapesize()[1] * 1
-    x_cond = obj_x - (obj_w / 2 + space) <= missile.xcor() <= obj_x + (obj_w / 2 + space)
-    return x_cond
-
-
-def is_collision_y_cond_met(obj, missile, space):
-    obj_y = obj.ycor()
-    obj_h = obj.shapesize()[0] * 1
-    y_cond = obj_y - (obj_h / 2 + space) <= missile.ycor() <= obj_y + (obj_h / 2 + space)
-    return y_cond
-
-
-def are_collision_x_y_cond_met(obj, missile, space):
-    x_cond_met = is_collision_x_cond_met(obj, missile, space)
-    y_cond_met = is_collision_y_cond_met(obj, missile, space)
-    return x_cond_met and y_cond_met
+from util.util import *
 
 
 class TurtleInvaders:
@@ -58,14 +39,16 @@ class TurtleInvaders:
         self.uap_sec_low = 1000
         self.uap_sec_high = 3000
         self.uap_freq = random.randint(self.uap_sec_low, self.uap_sec_high) * .01
-        self.turtle_movement_horiz = -5
+        # self.uap_freq = 500 * .01  # More frequent UAPs for testing
+        self.turtle_march_speed = -5
         self.turtles_have_reversed = False  # Flag indicating turtles have changed direction
         self.pause_game = False
         self.game_on = True
         self.player_missiles = []
         self.player_has_fired = False
         # self.player_reload_time = random.randint(2000, 5000)
-        self.player_reload_time = 2500
+        self.player_reload_time_init = 2000
+        self.player_reload_time = self.player_reload_time_init
         self.turtles_to_pop_ind = []
 
     def setup_screen(self):
@@ -111,6 +94,9 @@ class TurtleInvaders:
                 pos_y = start_y + spacing_y + center_y
 
                 self.turtle_positions.append((pos_x, pos_y))
+
+    def player_reload_time_reset(self):
+        self.player_reload_time = self.player_reload_time_init
 
     def turtle_formation(self):
         for i in range(len(self.turtle_positions)):
@@ -222,7 +208,7 @@ class TurtleInvaders:
     def reset_player_has_fired_flag(self):
         self.player_has_fired = False
 
-    def player_fire(self):
+    def player_fire_missile(self):
         if not self.player_has_fired:
             player_missile = Turtle()
             player_missile.shape('square')
@@ -242,22 +228,39 @@ class TurtleInvaders:
             i.goto(player_x, player_y + 30)
             if player_y > self.screen_height / 2:
                 self.player_missiles.pop(self.player_missiles.index(i))
-            # # # # # # # # #
-            # # # # # # # # #
-            # # # # # # # # #
-            # # # # # # # # #
-            # # # # # # # # #
-            # # # # # # # # #
-            # # # # # # # # #
-            # # # # # # # # #
-            # # # # # # # # #
             else:
                 for j in self.all_turtles:
-                    if are_collision_x_y_cond_met(j, i, 15):
+                    if are_collision_x_y_cond_met(j, i, 15, 15):
+                        self.score_current += 10
+                        self.update_scoreboard()
                         i.goto(-1500, 0)
                         j.goto(-1500, 0)
                         self.player_missiles.pop(self.player_missiles.index(i))
                         self.all_turtles.pop(self.all_turtles.index(j))
+                if are_collision_x_y_cond_met(self.uap, i, 50, 25):
+                    i.goto(-1500, 0)
+                    self.player_missiles.pop(self.player_missiles.index(i))
+                    self.score_current += 50
+                    self.update_scoreboard()
+                    self.uap_x = self.screen_width / 2 + 50
+                    self.uap.teleport(self.uap_x, self.uap_y)
+                    self.player_reload_time = 1000  # Bonus rapid fire for UAP hit
+                    self.screen.ontimer(self.player_reload_time_reset, 5000)
+                    self.time_tracker = 0
+                    self.uap_freq = random.randint(self.uap_sec_low,
+                                                   self.uap_sec_high) * .01
+
+    def update_scoreboard(self):
+        self.score_object.clear()
+        self.score_object.penup()
+        self.score_object.hideturtle()
+        self.score_object.color(PLAYER_COLOR)
+        pos_x = -self.screen_width / 2 + self.screen_width / 20
+        pos_y = self.screen_height / 2 - self.screen_height / 15
+        self.score_object.goto(pos_x, pos_y)
+        self.score_object.write(f"{self.score_current:04d}",
+                                align="center",
+                                font=("Source Sans 3 Black", 32, "italic"))
 
     def check_player_destroyed(self):
         pass
@@ -273,7 +276,7 @@ class TurtleInvaders:
     def key_listeners(self):
         """Creates key listeners for movement/pause_toggle/quit_game/restart_game methods."""
         self.screen.listen()
-        self.screen.onkeypress(self.player_fire, 'space')
+        self.screen.onkeypress(self.player_fire_missile, 'space')
         self.screen.onkeypress(self.player_left, 'Left')
         self.screen.onkeypress(self.player_right, 'Right')
         self.screen.onkeypress(self.pause_toggle, 'p')
@@ -281,7 +284,11 @@ class TurtleInvaders:
         self.screen.onkeypress(self.restart_game, 'r')
 
     def turtle_change_dir(self):
-        self.turtle_movement_horiz *= -1
+        if self.turtle_march_speed < 1:
+            self.turtle_march_speed -= 1
+        else:
+            self.turtle_march_speed += 1
+        self.turtle_march_speed *= -1
 
     def reset_turtle_flag(self):
         self.turtles_have_reversed = False
@@ -312,7 +319,7 @@ class TurtleInvaders:
         for i in self.all_turtles:
             self.time_tracker += .01
             i.turtlesize(stretch_wid=rand_stretch, stretch_len=rand_stretch)
-            i.teleport(i.xcor() + self.turtle_movement_horiz,
+            i.teleport(i.xcor() + self.turtle_march_speed,
                        i.ycor() + turtle_movement_vert)
 
     def check_turtle_destroyed(self):

@@ -42,11 +42,12 @@ class TurtleInvaders:
         self.uap_y = 0
         self.round_number = 1
         self.uap_freq_tracker = 0
-        # w/tracer set to 10, a uap_freq of 1000 means about a 3 second UAP delay:
+        # w/tracer set to 20, a uap_freq of 1000 means about a 3 second UAP delay:
         self.uap_freq_low = 2500
-        self.uap_freq_high = 700
-        # Allows variation in UAP frequency of range ~7 to ~20 seconds w/`tracer(10)`:
-        self.uap_freq = random.randint(self.uap_freq_low, self.uap_freq_high) * .01
+        self.uap_freq_high = 7000
+        # Allows variation in UAP frequency of range ~7 to ~20 seconds w/`tracer(20)`:
+        # self.uap_freq = random.randint(self.uap_freq_low, self.uap_freq_high) * .01
+        self.uap_freq = 1000 * .01
         self.turtle_march_speed = turtle_march_speed
         self.turtle_march_speed_increase = turtle_march_speed_increase
         self.turtle_movement_vert = turtle_movement_vert
@@ -252,20 +253,37 @@ class TurtleInvaders:
     #  #  #  #  #  #
     # SHIELD STUFF #
     #  #  #  #  #  #
-    def fortify_shields(self):
-        shield_y = -self.screen_height / 2 + self.screen_height / 5.5
-        lr_spacing = {0: -75, 1: 0, 2: 75}
-        for i in range(3):
-            shield = Turtle()
-            shield.penup()
-            shield.setheading(90)
-            shield.shape('classic')
-            shield.turtlesize(stretch_wid=20, stretch_len=4, outline=10)
-            shield.color(PLAYER_COLOR)
-            shild_grid_div = self.screen_width / 4 * (i + 1) + lr_spacing[i]
-            shield_x = -self.screen_width / 2 + shild_grid_div
-            shield.goto(shield_x, shield_y)
-            self.shields.append(shield)
+    def deploy_shields(self):
+        shield_num = 3
+
+        # Shield x stuff:
+        shield_div_x = self.screen_width / (shield_num + 1)
+        shield_grid_x = -self.screen_width / 2 + shield_div_x
+        shield_bits_spacing = 24
+        shield_bits_x_num = 8
+        shield_width = shield_bits_x_num * shield_bits_spacing
+
+        # Shield y stuff:
+        shield_grid_y = -self.screen_height / 2 + self.screen_height / 5
+        shield_bits_y_num = 2
+
+        # Create shield bits:
+        for i in range(shield_num):
+            # Center each shield:
+            shield_x_begin = shield_grid_x - shield_width / 2
+            for j in range(shield_bits_x_num):
+                shield_y_begin = shield_grid_y
+                for k in range(shield_bits_y_num):
+                    shield = Turtle()
+                    shield.penup()
+                    shield.shape('square')
+                    shield.turtlesize(stretch_wid=1, stretch_len=1, outline=0)
+                    shield.color(PLAYER_COLOR)
+                    shield.goto(shield_x_begin, shield_y_begin)
+                    self.shields.append(shield)
+                    shield_y_begin += shield_bits_spacing
+                shield_x_begin += shield_bits_spacing
+            shield_grid_x += shield_div_x
 
     #  #  #   #  #  #  #
     # SCOREBOARD STUFF #
@@ -377,7 +395,7 @@ class TurtleInvaders:
         self.get_turtle_positions()
         self.turtle_formation()
         self.deploy_cannon()
-        self.fortify_shields()
+        self.deploy_shields()
         self.uap_sighting()
 
     def begin_invasion(self):
@@ -385,8 +403,7 @@ class TurtleInvaders:
         self.screen.tracer(0)
         self.get_screen_width()
         self.setup_pieces()
-        # self.screen.tracer(2)
-        self.screen.tracer(10)
+        self.screen.tracer(20)
         self.key_listeners()
         while self.lives_left > 0:
             while self.game_on:

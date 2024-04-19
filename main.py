@@ -8,23 +8,14 @@ from util.util import *
 
 
 class TurtleInvaders:
-    def __init__(self,
-                 turtle_march_speed: int | float = 1,
-                 turtle_march_speed_increase: int | float = .5,
-                 turtle_movement_vert: int = 10,
-                 patriot_reload_time: int = 1000,
-                 uap_flyby_speed: int = 5,
-                 sam_speed: int = 10):
+    def __init__(self):
         self.screen = None
         self.formation_div_x = 6
         self.formation_div_y = 4
-        self.monitor_width = 1920
-        self.monitor_height = 1080
         self.screen_stretch_x = .65
         self.screen_stretch_y = .8
-        self.screen_width = 1248
-        self.screen_height = 810
-        self.turtle_formation_width = 1440
+        self.screen_width = None
+        self.screen_height = None
         self.formation_gutter_factor = .7  # Smaller val = bigger L-R gutters
         self.patriot = None
         self.patriot_start_x = -2
@@ -45,18 +36,18 @@ class TurtleInvaders:
         self.uap_freq_high = 22  # Means about a 20-second UAP delay
         # Allow variation in delay of UAPs:
         self.uap_freq = random.randint(self.uap_freq_low, self.uap_freq_high)
-        self.turtle_march_speed = turtle_march_speed
-        self.turtle_march_speed_increase = turtle_march_speed_increase
-        self.turtle_movement_vert = turtle_movement_vert
-        self.uap_flyby_speed = uap_flyby_speed
+        self.turtle_march_speed = 1
+        self.turtle_march_speed_increase = .5
+        self.turtle_movement_vert = 10
+        self.uap_flyby_speed = 5
         self.turtles_have_reversed = False  # Flag indicating turtles have changed direction
         self.pause_game = False
         self.game_on = True
         self.patriot_sams = []
         self.sam_has_fired = False
-        self.patriot_reload_time_init = patriot_reload_time
+        self.patriot_reload_time_init = 1000
         self.patriot_reload_time = self.patriot_reload_time_init
-        self.sam_speed = sam_speed
+        self.sam_speed = 10
         self.turtles_to_pop_ind = []
         self.shields = []
         self.tracer_val = 25
@@ -76,12 +67,12 @@ class TurtleInvaders:
         self.screen.bgcolor('gray0')
 
         monitor = get_monitors()[0]
-        self.monitor_width = monitor.width
-        self.monitor_height = monitor.height
-        self.screen_width = int(self.monitor_width * self.screen_stretch_x)
-        self.screen_height = int(self.monitor_height * self.screen_stretch_y)
-        screen_pos_x = (self.monitor_width - self.screen_width) // 2
-        screen_pos_y = (self.monitor_height - self.screen_height) // 2
+        monitor_width = monitor.width
+        monitor_height = monitor.height
+        self.screen_width = int(monitor_width * self.screen_stretch_x)
+        self.screen_height = int(monitor_height * self.screen_stretch_y)
+        screen_pos_x = (monitor_width - self.screen_width) // 2
+        screen_pos_y = (monitor_height - self.screen_height) // 2
 
         self.screen.setup(width=self.screen_width,
                           height=self.screen_height,
@@ -180,13 +171,13 @@ class TurtleInvaders:
         return hellfire
 
     def get_turtle_positions(self):
-        self.turtle_formation_width = self.screen_width * self.formation_gutter_factor
-        turtle_grid_width = self.turtle_formation_width / self.formation_div_x
+        turtle_formation_width = self.screen_width * self.formation_gutter_factor
+        turtle_grid_width = turtle_formation_width / self.formation_div_x
         turtle_grid_height = self.screen_height / self.formation_div_y
 
         for x in range(self.formation_div_x):
             for y in range(self.formation_div_y):
-                start_x = -self.turtle_formation_width / 2
+                start_x = -turtle_formation_width / 2
                 spacing_x = turtle_grid_width * x
                 center_x = turtle_grid_width / 2
                 pos_x = start_x + spacing_x + center_x

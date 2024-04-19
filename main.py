@@ -4,7 +4,7 @@ from screeninfo import get_monitors
 import sys
 
 from config.config import *
-from util.util import *
+from modules.collision_functions import *
 
 
 class TurtleInvaders:
@@ -48,14 +48,18 @@ class TurtleInvaders:
         self.patriot_reload_time_init = 1000
         self.patriot_reload_time = self.patriot_reload_time_init
         self.sam_speed = 10
-        self.turtles_to_pop_ind = []
         self.shields = []
         self.tracer_val = 25
-        self.turtle_hellfires = []
+        self.hellfires = []
         self.hellfire_speed = 15
         self.turtle_has_fired = False
         self.hellfire_barrage_begun = False
-        self.hellfire_freq = (500, 5000)  # Divide by 1000 for seconds
+        self.hellfire_low_init = 500  # Divide by 1000 = .5 seconds/5 seconds
+        self.hellfire_high_init = 5000  # Divide by 1000 = 5 seconds
+        self.hellfire_high_init = 1500  # Divide by 1000 = 5 seconds
+        self.hellfire_low = self.hellfire_low_init
+        self.hellfire_high = self.hellfire_high_init
+        self.hellfire_freq = (self.hellfire_low, self.hellfire_high)
 
     #  #  #  #  #  #
     # SCREEN STUFF #
@@ -64,7 +68,7 @@ class TurtleInvaders:
         self.screen = Screen()
         self.screen.title("Turtle Invaders")
         self.screen.colormode(255)
-        self.screen.bgcolor('gray0')
+        self.screen.bgcolor(SCREEN_COLOR)
 
         monitor = get_monitors()[0]
         monitor_width = monitor.width
@@ -101,6 +105,13 @@ class TurtleInvaders:
         self.turtle_march_speed *= -self.turtle_march_speed_increase
 
     def reset_turtle_flag(self):
+        """Resets turtles_have_reversed flag. Also slightly increases the hellfire
+        frequency each time turtles have reversed."""
+        self.hellfire_low -= 50
+        self.hellfire_low = max(self.hellfire_low, 250)
+        self.hellfire_high -= 50
+        self.hellfire_high = max(self.hellfire_high, 2500)
+        self.hellfire_freq = (self.hellfire_low, self.hellfire_high)
         self.turtles_have_reversed = False
 
     def turtle_march(self):
@@ -141,7 +152,7 @@ class TurtleInvaders:
                 hellfire = self.deploy_turtle_hellfire()
                 hellfire.color(first.color()[0])
                 hellfire.goto(first.xcor(), first.ycor() - 20)
-                self.turtle_hellfires.append(hellfire)
+                self.hellfires.append(hellfire)
                 delay = random.randint(*self.hellfire_freq)
                 self.screen.ontimer(self.reset_turtle_has_fired_flag, delay)
             elif not self.turtle_has_fired:
@@ -149,14 +160,50 @@ class TurtleInvaders:
                 hellfire = self.deploy_turtle_hellfire()
                 hellfire.color(i.color()[0])
                 hellfire.goto(i.xcor(), i.ycor() - 20)
-                self.turtle_hellfires.append(hellfire)
+                self.hellfires.append(hellfire)
                 delay = random.randint(*self.hellfire_freq)
                 self.screen.ontimer(self.reset_turtle_has_fired_flag, delay)
-            for j in self.turtle_hellfires:
+            for j in self.hellfires:
                 j.goto(j.xcor(), j.ycor() - 1)
                 if j.ycor() < -self.screen_height / 2:
-                    j.goto(-1500, 0)
-                    self.turtle_hellfires.pop(self.turtle_hellfires.index(j))
+                    j.goto(1500, 1500)
+                    # noinspection PyUnusedLocal
+                    to_del = self.hellfires.pop(self.hellfires.index(j))
+                    del to_del
+                # # # # # # # # # # # #
+                # Check for friendly-fire and degrade shields accordingly:
+                # # # # # # # # # # # #
+                # print(self.patriot.get_shapepoly())  # For development
+                #  returns: ((40.0, -11.54), (0.0, 23.1), (-40.0, -11.54))
+                # Make algo for collision with patriot 'triangle':
+                if are_collision_x_y_cond_met(self.patriot, j, 80, 35):
+                    self.patriot_destroyed()
+                for shield in self.shields:
+                    if are_collision_x_y_cond_met(shield, j, 25, 20):
+                        j.goto(1500, 1500)
+                        # noinspection PyUnusedLocal
+                        to_del = self.hellfires.pop(self.hellfires.index(j))
+                        del to_del
+                        curr_ind = SHIELD_STAGES.index(shield.color()[0])
+                        new_ind = curr_ind + 1
+                        if new_ind <= len(SHIELD_STAGES) - 1:
+                            new_color = SHIELD_STAGES[new_ind]
+                            shield.color(new_color)
+                        else:
+                            shield.goto(1500, 1500)
+                            # noinspection PyUnusedLocal
+                            to_del = self.shields.pop(self.shields.index(shield))
+                            del to_del
+
+    def patriot_redeploy(self):
+        self.patriot.color(SCREEN_COLOR)
+        self.patriot.goto(self.patriot_start_x, self.patriot_start_y)
+        self.patriot.color(PLAYER_COLOR)
+
+    def patriot_destroyed(self):
+        self.lives_left -= 1
+        self.update_lives()
+        self.patriot_redeploy()
 
     def reset_turtle_has_fired_flag(self):
         self.turtle_has_fired = False
@@ -240,19 +287,27 @@ class TurtleInvaders:
             patriot_x, patriot_y = i.xcor(), i.ycor()
             i.goto(patriot_x, patriot_y + self.sam_speed)
             if patriot_y > self.screen_height / 2:
-                self.patriot_sams.pop(self.patriot_sams.index(i))
+                # noinspection PyUnusedLocal
+                to_del = self.patriot_sams.pop(self.patriot_sams.index(i))
+                del to_del
             else:
                 for j in self.all_turtles:
                     if are_collision_x_y_cond_met(j, i, 15, 10):
                         self.score_current += 10
                         self.update_scoreboard()
-                        i.goto(-1500, 0)
-                        j.goto(-1500, 0)
-                        self.patriot_sams.pop(self.patriot_sams.index(i))
-                        self.all_turtles.pop(self.all_turtles.index(j))
+                        i.goto(1500, 1500)
+                        j.goto(1500, 1500)
+                        # noinspection PyUnusedLocal
+                        to_del_sam = self.patriot_sams.pop(self.patriot_sams.index(i))
+                        del to_del_sam
+                        # noinspection PyUnusedLocal
+                        to_del_turt = self.all_turtles.pop(self.all_turtles.index(j))
+                        del to_del_turt
                 if are_collision_x_y_cond_met(self.uap, i, 35, 15):
-                    i.goto(-1500, 0)
-                    self.patriot_sams.pop(self.patriot_sams.index(i))
+                    i.goto(1500, 1500)
+                    # noinspection PyUnusedLocal
+                    to_del = self.patriot_sams.pop(self.patriot_sams.index(i))
+                    del to_del
                     self.score_current += 50
                     self.update_scoreboard()
                     self.uap_x = self.screen_width / 2 + 50
@@ -267,16 +322,20 @@ class TurtleInvaders:
                 # Check for friendly-fire and degrade shields accordingly:
                 for shield in self.shields:
                     if are_collision_x_y_cond_met(shield, i, 25, 20):
-                        i.goto(-1500, 0)
-                        self.patriot_sams.pop(self.patriot_sams.index(i))
+                        i.goto(1500, 1500)
+                        # noinspection PyUnusedLocal
+                        to_del = self.patriot_sams.pop(self.patriot_sams.index(i))
+                        del to_del
                         curr_ind = SHIELD_STAGES.index(shield.color()[0])
                         new_ind = curr_ind + 1
                         if new_ind <= len(SHIELD_STAGES) - 1:
                             new_color = SHIELD_STAGES[new_ind]
                             shield.color(new_color)
                         else:
-                            shield.goto(-1500, 0)
-                            self.shields.pop(self.shields.index(shield))
+                            shield.goto(1500, 1500)
+                            # noinspection PyUnusedLocal
+                            to_del = self.shields.pop(self.shields.index(shield))
+                            del to_del
 
     def patriot_reload_time_reset(self):
         self.patriot_reload_time = self.patriot_reload_time_init
@@ -360,6 +419,19 @@ class TurtleInvaders:
                                 align="center",
                                 font=("Source Sans 3 Black", 32, "italic"))
 
+    def update_lives(self):
+        self.lives_object.clear()
+        self.lives_object.penup()
+        self.lives_object.hideturtle()
+        self.lives_object.color(PLAYER_COLOR)
+        shift_factor = (self.lives_left - 1) * self.screen_width / 95
+        pos_x = self.screen_width / 2 - self.screen_width / 50 - shift_factor
+        pos_y = self.screen_height / 2 - self.screen_height / 15
+        self.lives_object.goto(pos_x, pos_y)
+        self.lives_object.write("▲" * (self.lives_left - 1),
+                                align="center",
+                                font=("Source Sans 3 Black", 32, "italic"))
+
     def update_scoreboard(self):
         self.score_object.clear()
         self.score_object.penup()
@@ -415,6 +487,17 @@ class TurtleInvaders:
     #  #   #  #   #  #
     def restart_game(self):
         self.screen.clear()
+
+        # Garbage collection
+        del self.all_turtles
+        del self.patriot
+        del self.score_object
+        del self.lives_object
+        del self.uap
+        del self.patriot_sams
+        del self.shields
+        del self.hellfires
+
         self.__init__()
         self.begin_invasion()
 
@@ -432,6 +515,7 @@ class TurtleInvaders:
         self.screen.onkeypress(self.restart_game, 'r')
 
     def quit_game(self):
+        self.game_on = False
         self.screen.bye()
 
     def setup_pieces(self):
@@ -451,15 +535,18 @@ class TurtleInvaders:
         # self.screen.tracer(20)
         self.screen.tracer(self.tracer_val)
         self.key_listeners()
-        while self.lives_left > 0:
-            while self.game_on:
-                if not self.pause_game:
-                    self.screen.update()
-                    self.turtle_march()
-                    self.sam_path()
-                    self.uap_flyby()
-                else:
-                    self.screen.update()
+        while self.game_on:
+            if not self.pause_game and self.lives_left > 0:
+                self.screen.update()
+                self.turtle_march()
+                self.sam_path()
+                self.uap_flyby()
+            elif self.lives_left > 0:
+                self.screen.update()
+            else:
+                self.inititalize_lives()
+                self.inititalize_score()
+                self.restart_game()
         self.screen.exitonclick()
 
 

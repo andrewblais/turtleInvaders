@@ -1,5 +1,6 @@
 # 'arrow', 'turtle', 'circle', 'square', 'triangle', 'classic'
 
+SCREEN_COLOR = 'gray0'
 PLAYER_COLOR = 'LightGray'
 SHIELD_STAGES = ['gray100', 'gray90', 'gray80', 'gray70', 'gray60', 'gray50',
                  'gray40', 'gray30', 'gray20', 'gray10']

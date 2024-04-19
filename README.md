@@ -2,7 +2,17 @@
 
 ## Project in progress.
 
-A class to...
+A class to create a Space Invaders clone. Completed for Professional Portfolio Project:
+Assignment 14: Angela Yu 100 Days of Code -- "GUI Automation: Space Invaders".
+
+A huge goal of this project is to create a responsive design as many values as possible
+are based on the user's screen size rather than being hard-coded. Some work still to
+be done on this issue, but the game should work fairly well on computers of varying
+resolutions/dimensions.
+
+Aliens will of course be turtles, because of course...
+
+### Resources Utilized
 
 - [Python](https://www.python.org/)
 

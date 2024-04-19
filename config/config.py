@@ -1,8 +1,8 @@
 # 'arrow', 'turtle', 'circle', 'square', 'triangle', 'classic'
 
 PLAYER_COLOR = 'LightGray'
-SHIELD_ONE_COLOR = 'LightSlateGray'
-SHIELD_TWO_COLOR = 'SlateGray'
+SHIELD_STAGES = ['gray100', 'gray90', 'gray80', 'gray70', 'gray60', 'gray50',
+                 'gray40', 'gray30', 'gray20', 'gray10']
 TURTLE_COLORS = ['LightSteelBlue', 'DarkSeaGreen', 'CadetBlue', 'CornflowerBlue',
                  'MediumPurple', 'Orchid', 'IndianRed', 'Tomato', 'Chocolate',
                  'DarkOrange', 'SandyBrown', 'DarkSalmon', 'DarkKhaki']

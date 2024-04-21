@@ -15,3 +15,11 @@ TURTLE_COLOR_INDEX_DICT = {
     range(2, 23, 4): 1,  # Second row from top
     range(3, 24, 4): 2,  # Top row
 }
+
+
+def invader_get_row_index(number, game_round_current):
+    for key, value in TURTLE_COLOR_INDEX_DICT.items():
+        if number in key:
+            # Cycle through list again if round algo exceed length:
+            return (value + game_round_current) % len(TURTLE_COLORS)
+    raise ValueError(f"Number {number} not in any range key.")

@@ -1,5 +1,19 @@
 # Turtle Invaders
 
+```
+      #                   # # #                   #
+      # #              # # # # # #              # #
+      # # #          # # # # # # # #          # # #
+      # # # #      # # # # # # # # # #      # # # #
+      # # # # #   # #   # # # # #   # #   # # # # #
+      # # # # # # # #      # #      # # # # # # # #
+      # # # # #   # # #   # # #   # # #   # # # # #
+      # # # #      # # # # # # # # # #      # # # #
+      # # #          # # # # # # # #          # # #
+      # #              # # # # # #              # #
+      #                   # # #                   #
+```
+
 ## Project in progress.
 
 A class to create a Space Invaders clone. Completed for Professional Portfolio Project:

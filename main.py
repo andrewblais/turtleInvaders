@@ -24,20 +24,21 @@ class TurtleInvaders:
         self.invader_formation_div_x = 6
         self.invader_formation_div_y = 4
         self.invader_formation_gutter_factor = .7  # Smaller val = bigger L-R gutters
-        self.invader_positions = []
+        self.invader_pos_all = []
         self.invaders_march_speed = 1
         self.invaders_march_speed_increase = .5
-        self.invader_movement_vert = 10
-        self.invaders_have_reversed = False  # Flag indicating invaders have changed direction
-        self.invader_missiles = []
-        self.invader_player_missile_speed = 1
+        self.invader_vert_init = 10
+        self.invader_vert_now = self.invader_vert_init
+        self.reversed = False  # Flag indicating invaders have changed direction
+        self.invader_bombs = []
+        self.invader_bomb_speed = 1
         self.invader_has_fired = False
-        self.invader_missile_barrage_begun = False
-        self.invader_missile_low_init = 500  # ~ 1/2 second
-        self.invader_missile_high_init = 5000  # ~5 seconds
-        self.invader_missile_low = self.invader_missile_low_init
-        self.invader_missile_high = self.invader_missile_high_init
-        self.invader_missile_freq = (self.invader_missile_low, self.invader_missile_high)
+        self.invader_bomb_barrage_begun = False
+        self.invader_bomb_low_init = 500  # ~ 1/2 second
+        self.invader_bomb_high_init = 5000  # ~5 seconds
+        self.invader_bomb_low = self.invader_bomb_low_init
+        self.invader_bomb_high = self.invader_bomb_high_init
+        self.invader_bomb_freq = (self.invader_bomb_low, self.invader_bomb_high)
 
         # PLAYER ATTRIBUTES:
         self.player = None
@@ -93,22 +94,14 @@ class TurtleInvaders:
             print(f"get_monitors() error: {e}")
             # Hard code in case of error:
             self.scr_w = 1920
-            self.scr_w_half = self.scr_w / 2
+            self.scr_w_half = 960
             self.scr_h = 1080
-            self.scr_h_half = self.scr_h / 2
+            self.scr_h_half = 540
             pos_x = 336
             pos_y = 108
         self.scr.setup(width=self.scr_w, height=self.scr_h, startx=pos_x, starty=pos_y)
 
     # INVADER METHODS:
-    @staticmethod
-    def invader_get_row_index(number, game_round_current):
-        for key, value in TURTLE_COLOR_INDEX_DICT.items():
-            if number in key:
-                # Cycle through list again if round algo exceed length:
-                return (value + game_round_current) % len(TURTLE_COLORS)
-        raise ValueError(f"Number {number} not in any range key.")
-
     def invaders_change_dir(self):
         """Reverses invaders direction on wall hit."""
         if self.invaders_march_speed < 1:
@@ -117,19 +110,38 @@ class TurtleInvaders:
             self.invaders_march_speed += 1
         self.invaders_march_speed *= -self.invaders_march_speed_increase
 
-    def invaders_have_reversed_flag_reset(self):
-        """Resets invaders_have_reversed flag. Also slightly increases the invader_missile
+    def reversed_flag_reset(self):
+        """Resets reversed flag. Also slightly increases the invader_bomb
         frequency each time invaders have reversed."""
-        # Keeps self.invader_missile_low above 250:
-        self.invader_missile_low -= 50
-        self.invader_missile_low = max(self.invader_missile_low, 250)
+        # Keeps self.invader_bomb_low above 250:
+        self.invader_bomb_low -= 50
+        self.invader_bomb_low = max(self.invader_bomb_low, 250)
 
-        # Keeps self.invader_missile_high above 2500:
-        self.invader_missile_high -= 50
-        self.invader_missile_high = max(self.invader_missile_high, 2500)
+        # Keeps self.invader_bomb_high above 2500:
+        self.invader_bomb_high -= 50
+        self.invader_bomb_high = max(self.invader_bomb_high, 2500)
 
-        self.invader_missile_freq = (self.invader_missile_low, self.invader_missile_high)
-        self.invaders_have_reversed = False
+        self.invader_bomb_freq = (self.invader_bomb_low, self.invader_bomb_high)
+        self.reversed = False
+
+    def invaders_reverse(self):
+        self.invaders_change_dir()
+        self.invader_vert_now = self.invader_vert_init
+        self.reversed = True
+        self.scr.ontimer(self.reversed_flag_reset, 5)
+
+    def invader_bomb_deploy(self, bomb_el):
+        self.invader_has_fired = True
+        invader_bomb = Turtle()
+        invader_bomb.shape('square')
+        invader_bomb.turtlesize(stretch_wid=.075, stretch_len=.8, outline=2)
+        invader_bomb.penup()
+        invader_bomb.setheading(270)
+        invader_bomb.color(bomb_el.color()[0])
+        invader_bomb.goto(bomb_el.xcor(), bomb_el.ycor() - 20)
+        self.invader_bombs.append(invader_bomb)
+        self.scr.ontimer(self.invader_has_fired_flag_reset,
+                         random.randint(*self.invader_bomb_freq))
 
     def invaders_march(self):
         # Restart game if all invaders destroyed:
@@ -137,64 +149,54 @@ class TurtleInvaders:
             self.game_lives_left = 0  # Condition for end of game/restart
 
         # End game if invaders make contact with shields:
-        min_invader_y = min([i.ycor() for i in self.invaders_all]) - 17.5
-        if min_invader_y <= self.shields_y_boundary:
+        if min([i.ycor() for i in self.invaders_all]) - 17.5 <= self.shields_y_boundary:
             self.game_lives_left = 0
 
-        right_limit = self.scr_w_half
-        left_limit = -right_limit
-
-        min_x = min([i.xcor() for i in self.invaders_all])
-        max_x = max([i.xcor() for i in self.invaders_all])
-
-        if min_x - 30 < left_limit and not self.invaders_have_reversed:
-            self.invaders_change_dir()
-            invader_movement_vert = self.invader_movement_vert
-            self.invaders_have_reversed = True
-            self.scr.ontimer(self.invaders_have_reversed_flag_reset, 5)
-        elif max_x + 35 > right_limit and not self.invaders_have_reversed:
-            self.invaders_change_dir()
-            invader_movement_vert = self.invader_movement_vert
-            self.invaders_have_reversed = True
-            self.scr.ontimer(self.invaders_have_reversed_flag_reset, 5)
+        # `- 30` allows accuracy in left screen limit:
+        min_x = min([i.xcor() for i in self.invaders_all]) - 30
+        # `+ 35` allows accuracy in right screen limit:
+        max_x = max([i.xcor() for i in self.invaders_all]) + 35
+        if (min_x < -self.scr_w_half or max_x > self.scr_w_half) and not self.reversed:
+            self.invaders_reverse()
         else:
-            invader_movement_vert = 0
+            self.invader_vert_now = 0
 
-        rand_dec = random.randint(71, 79) / 100
-        rand_stretch = 1 + rand_dec
-
+        # Creates 'living' effect for invaders:
+        rand_stretch = 1 + random.randint(71, 79) / 100
         for i in self.invaders_all:
             # SAUCER freq tied to invader marching. The following equation makes
             #  self.saucer_freq_tracker increment approx 1.0 per second:
             self.saucer_freq_tracker += self.game_tracer_val / 10000
             i.turtlesize(stretch_wid=rand_stretch, stretch_len=rand_stretch)
             i.teleport(i.xcor() - self.invaders_march_speed,
-                       i.ycor() - invader_movement_vert)
-            # Random first invader to fire:
-            if not self.invader_missile_barrage_begun:
-                self.invader_missile_barrage_begun = True
-                self.invader_has_fired = True
+                       i.ycor() - self.invader_vert_now)
+
+            # Chooses first to fire randomly from list:
+            if not self.invader_bomb_barrage_begun:
                 first = random.choice(self.invaders_all)
-                invader_missile = self.invader_missile_deploy()
-                invader_missile.color(first.color()[0])
-                invader_missile.goto(first.xcor(), first.ycor() - 20)
-                self.invader_missiles.append(invader_missile)
-                delay = random.randint(*self.invader_missile_freq)
-                self.scr.ontimer(self.invader_has_fired_flag_reset, delay)
+                self.invader_bomb_barrage_begun = True
+                self.invader_bomb_deploy(first)
             elif not self.invader_has_fired:
-                self.invader_has_fired = True
-                invader_missile = self.invader_missile_deploy()
-                invader_missile.color(i.color()[0])
-                invader_missile.goto(i.xcor(), i.ycor() - 20)
-                self.invader_missiles.append(invader_missile)
-                delay = random.randint(*self.invader_missile_freq)
-                self.scr.ontimer(self.invader_has_fired_flag_reset, delay)
-            for j in self.invader_missiles:
-                j.goto(j.xcor(), j.ycor() - self.invader_player_missile_speed)
+                self.invader_bomb_deploy(i)
+
+            #                   # # #                   #
+            # #              # # # # # #              # #
+            # # #          # # # # # # # #          # # #
+            # # # #      # # # # # # # # # #      # # # #
+            # # # # #   # #   # # # # #   # #   # # # # #
+            # # # # # # # #  RESUME HERE  # # # # # # # #
+            # # # # #   # # #   # # #   # # #   # # # # #
+            # # # #      # # # # # # # # # #      # # # #
+            # # #          # # # # # # # #          # # #
+            # #              # # # # # #              # #
+            #                   # # #                   #
+
+            for j in self.invader_bombs:
+                j.goto(j.xcor(), j.ycor() - self.invader_bomb_speed)
                 if j.ycor() < -self.scr_h_half:
                     j.goto(1500, 1500)
                     # noinspection PyUnusedLocal
-                    del_i = self.invader_missiles.pop(self.invader_missiles.index(j))
+                    del_i = self.invader_bombs.pop(self.invader_bombs.index(j))
                     del del_i
                 # ((40.0, -30.0), (40.0, 30.0), (-40.0, 30.0), (-40.0, -30.0))
                 if are_collision_x_y_cond_met(self.player, j, 40, 30):
@@ -205,7 +207,7 @@ class TurtleInvaders:
                     if are_collision_x_y_cond_met(shield, j, 20, 22.5):
                         j.goto(1500, 1500)
                         # noinspection PyUnusedLocal
-                        del_i = self.invader_missiles.pop(self.invader_missiles.index(j))
+                        del_i = self.invader_bombs.pop(self.invader_bombs.index(j))
                         del del_i
                         curr_ind = SHIELD_STAGES.index(shield.color()[0])
                         new_ind = curr_ind + 1
@@ -220,15 +222,6 @@ class TurtleInvaders:
 
     def invader_has_fired_flag_reset(self):
         self.invader_has_fired = False
-
-    @staticmethod
-    def invader_missile_deploy():
-        invader_missile = Turtle()
-        invader_missile.shape('square')
-        invader_missile.turtlesize(stretch_wid=.075, stretch_len=.8, outline=2)
-        invader_missile.penup()
-        invader_missile.setheading(270)
-        return invader_missile
 
     def invader_get_positions(self):
         invader_formation_width = self.scr_w * self.invader_formation_gutter_factor
@@ -249,20 +242,20 @@ class TurtleInvaders:
                 center_y = invader_grid_height / 2
                 pos_y = start_y + spacing_y + center_y
 
-                self.invader_positions.append((pos_x, pos_y))
+                self.invader_pos_all.append((pos_x, pos_y))
 
     def invader_formation(self):
-        for i in range(len(self.invader_positions)):
+        for i in range(len(self.invader_pos_all)):
             single_invader = Turtle()
             single_invader.shape('turtle')
             single_invader.speed('slowest')
             single_invader.turtlesize(stretch_wid=1.75, stretch_len=1.75)
-            color_ind = self.invader_get_row_index(i, self.game_round_current)
+            color_ind = invader_get_row_index(i, self.game_round_current)
             single_invader.color(TURTLE_COLORS[color_ind])
             single_invader.penup()
             single_invader.setheading(270)
-            single_invader.goto(self.invader_positions[i][0],
-                                self.invader_positions[i][1])
+            single_invader.goto(self.invader_pos_all[i][0],
+                                self.invader_pos_all[i][1])
             self.invaders_all.append(single_invader)
 
     # PLAYER METHODS:
@@ -464,7 +457,7 @@ class TurtleInvaders:
         del self.saucer
         del self.player_missiles_all
         del self.shields_all
-        del self.invader_missiles
+        del self.invader_bombs
 
         self.__init__()
         self.game_begin_invasion()

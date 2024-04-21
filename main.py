@@ -1,7 +1,5 @@
-"""
-Main module for the Turtle Invaders game. This module initializes the game environment,
-manages game events, and processes all game logic and interactions.
-"""
+# Main module for the Turtle Invaders game. This module initializes the game
+#  environment, manages game events, and processes all game logic and interactions.
 
 import random
 from screeninfo import get_monitors
@@ -16,63 +14,63 @@ class TurtleInvaders:
     """
     A class to manage the overall game logic and state for Turtle Invaders.
 
-    :ivar game_is_paused: Boolean indicating if the game is currently paused.
-    :ivar game_is_on: Boolean indicating if the game is active.
-    :ivar game_lives_object: Turtle object to display remaining lives.
-    :ivar game_round_current: Integer tracking the current round of the game.
-    :ivar game_lives_left: Integer representing the number of lives left.
-    :ivar game_score_object: Turtle object to display current score.
-    :ivar game_score_current: Integer tracking the current score.
-    :ivar game_tracer_val: Integer to control the screen update rate for animations.
-    :ivar invaders_y_limit: Integer setting upper y-axis limit for invaders' initial position.
-    :ivar invaders_vert_compress: Integer to compress invader rows closer vertically.
-    :ivar invaders_all: List of all invader Turtle objects.
-    :ivar invader_formation_div_x: Integer to divide the screen width for invader formation.
-    :ivar invader_formation_div_y: Integer to divide the screen height for invader formation.
-    :ivar invader_gutter_factor: Float representing left-right gutter size factor; smaller values result in larger gutters.
-    :ivar invader_pos_all: List of tuples for storing calculated invader positions.
-    :ivar invaders_march_speed: Float to control the speed of invaders' movement.
-    :ivar invaders_march_speed_increase: Float to increase the speed of invaders when direction changes.
-    :ivar invader_vert_init: Initial vertical position adjustment for invaders.
-    :ivar invader_vert_now: Current vertical position of invaders.
-    :ivar lr_rl: Boolean flag to indicate if invaders have changed direction.
-    :ivar invader_bombs: List of all active invader bomb Turtle objects.
-    :ivar invader_bomb_speed: Integer controlling the speed of invader bombs.
-    :ivar invader_has_fired: Boolean flag to track if an invader has fired a bomb.
-    :ivar invader_bomb_barrage_begun: Boolean to indicate if the invader bomb barrage has started.
-    :ivar invader_bomb_low_init: Initial lowest frequency of invader bombs.
-    :ivar invader_bomb_high_init: Initial highest frequency of invader bombs.
-    :ivar invader_bomb_low: Current lowest frequency of invader bombs.
-    :ivar invader_bomb_high: Current highest frequency of invader bombs.
-    :ivar invader_bomb_freq: Tuple to store the current frequency range of invader bombs.
-    :ivar player: Turtle object representing the player.
-    :ivar player_start_x: Float for the initial x-coordinate of the player.
-    :ivar player_start_y: Float for the initial y-coordinate of the player.
-    :ivar player_missiles_all: List of all active player missile Turtle objects.
-    :ivar player_has_fired: Boolean flag to track if the player has fired a missile.
-    :ivar player_reload_time_init: Integer to set initial reload time for player firing.
-    :ivar player_reload_time: Current reload time for player firing.
-    :ivar player_missile_speed: Integer to control the speed of player's missiles.
-    :ivar saucer: Turtle object representing the flying saucer.
-    :ivar saucer_x: Float for the current x-coordinate of the saucer.
-    :ivar saucer_y: Float for the current y-coordinate of the saucer.
-    :ivar saucer_shape_current: String representing the current shape of the saucer.
-    :ivar saucer_flyby_speed: Integer to control the speed of the saucer's flyby.
-    :ivar saucer_freq_tracker: Float to track the time until next saucer appearance.
-    :ivar saucer_freq_low: Integer setting the minimum delay for saucer appearances.
-    :ivar saucer_freq_high: Integer setting the maximum delay for saucer appearances.
-    :ivar saucer_freq: Integer to set the current delay for the next saucer appearance.
-    :ivar scr: Turtle Screen object for the game display.
-    :ivar scr_stretch_x: Float to set the horizontal stretch factor of the game screen.
-    :ivar scr_stretch_y: Float to set the vertical stretch factor of the game screen.
-    :ivar scr_w: Integer for the calculated width of the game screen.
-    :ivar scr_h: Integer for the calculated height of the game screen.
-    :ivar scr_w_half: Float for half the width of the game screen.
-    :ivar scr_h_half: Float for half the height of the game screen.
-    :ivar shield_num: Integer to set the number of shields.
-    :ivar shield_blocks_num: Integer to set the number of blocks per shield.
-    :ivar shields_all: List of all shield Turtle objects.
-    :ivar shields_y_boundary: Float to determine the y-coordinate boundary for shields.
+    :ivar game_is_paused (bool): Indicates if the game is currently paused.
+    :ivar game_is_on (bool): Indicates if the game is active.
+    :ivar game_lives_object (Turtle): Turtle object to display remaining lives.
+    :ivar game_round_current (int): Tracks the current round of the game.
+    :ivar game_lives_left (int): Represents the number of lives left.
+    :ivar game_score_object (Turtle): Turtle object to display current score.
+    :ivar game_score_current (int): Tracks the current score.
+    :ivar game_tracer_val (int): Controls the screen update rate for animations.
+    :ivar invaders_y_limit (int): Sets the upper y-axis limit for invaders' initial position.
+    :ivar invaders_vert_compress (int): Compresses invader rows closer vertically.
+    :ivar invaders_all (list) of Turtle: Contains all invader Turtle objects.
+    :ivar invader_formation_div_x (int): Divides the screen width for invader formation.
+    :ivar invader_formation_div_y (int): Divides the screen height for invader formation.
+    :ivar invader_gutter_factor (float): Represents left-right gutter size factor; smaller values result in larger gutters.
+    :ivar invader_pos_all (list) of tuple: Stores calculated invader positions.
+    :ivar invaders_main_march_speed (float): Controls the speed of invaders' movement.
+    :ivar invaders_main_march_speed_increase (float): Increases the speed of invaders when direction changes.
+    :ivar invader_vert_init (int): Initial vertical position adjustment for invaders.
+    :ivar invader_vert_now (int): Current vertical position of invaders.
+    :ivar lr_rl (bool): Indicates if invaders have changed direction.
+    :ivar invader_bombs (list) of Turtle: Contains all active invader bomb Turtle objects.
+    :ivar invader_bomb_speed (int): Controls the speed of invader bombs.
+    :ivar invader_has_fired (bool): Tracks if an invader has fired a bomb.
+    :ivar invader_bomb_barrage_begun (bool): Indicates if the invader bomb barrage has started.
+    :ivar invader_bomb_low_init (int): Initial lowest frequency of invader bombs.
+    :ivar invader_bomb_high_init (int): Initial highest frequency of invader bombs.
+    :ivar invader_bomb_low (int): Current lowest frequency of invader bombs.
+    :ivar invader_bomb_high (int): Current highest frequency of invader bombs.
+    :ivar invader_bomb_freq (tuple): Stores the current frequency range of invader bombs.
+    :ivar player (Turtle): Turtle object representing the player.
+    :ivar player_start_x (float): Initial x-coordinate of the player.
+    :ivar player_start_y (float): Initial y-coordinate of the player.
+    :ivar player_missiles_all (list) of Turtle: Contains all active player missile Turtle objects.
+    :ivar player_has_fired (bool): Tracks if the player has fired a missile.
+    :ivar player_reload_time_init (int): Sets initial reload time for player firing.
+    :ivar player_reload_time (int): Current reload time for player firing.
+    :ivar player_missile_speed (int): Controls the speed of player's missiles.
+    :ivar saucer (Turtle): Turtle object representing the flying saucer.
+    :ivar saucer_x (float): Current x-coordinate of the saucer.
+    :ivar saucer_y (float): Current y-coordinate of the saucer.
+    :ivar saucer_shape_current (str): Represents the current shape of the saucer.
+    :ivar saucer_flyby_speed (int): Controls the speed of the saucer's flyby.
+    :ivar saucer_freq_tracker (float): Tracks the time until next saucer appearance.
+    :ivar saucer_freq_low (int): Sets the minimum delay for saucer appearances.
+    :ivar saucer_freq_high (int): Sets the maximum delay for saucer appearances.
+    :ivar saucer_freq (int): Sets the current delay for the next saucer appearance.
+    :ivar scr (Screen): Turtle Screen object for the game display.
+    :ivar scr_stretch_x (float): Sets the horizontal stretch factor of the game screen.
+    :ivar scr_stretch_y (float): Sets the vertical stretch factor of the game screen.
+    :ivar scr_w (int): Calculated width of the game screen.
+    :ivar scr_h (int): Calculated height of the game screen.
+    :ivar scr_w_half (float): Half the width of the game screen.
+    :ivar scr_h_half (float): Half the height of the game screen.
+    :ivar shield_num (int): Sets the number of shields.
+    :ivar shield_blocks_num (int): Sets the number of blocks per shield.
+    :ivar shields_all (list) of Turtle: Contains all shield Turtle objects.
+    :ivar shields_y_boundary (float): Determines the y-coordinate boundary for shields.
     """
 
     def __init__(self):
@@ -98,8 +96,8 @@ class TurtleInvaders:
         self.invader_formation_div_y = 4
         self.invader_gutter_factor = .7  # Smaller val = bigger L-R gutters
         self.invader_pos_all = []
-        self.invaders_march_speed = 1
-        self.invaders_march_speed_increase = .5
+        self.invaders_main_march_speed = 1
+        self.invaders_main_march_speed_increase = .5
         self.invader_vert_init = 10
         self.invader_vert_now = self.invader_vert_init
         self.lr_rl = False  # Flag indicating invaders have changed direction
@@ -152,8 +150,13 @@ class TurtleInvaders:
     # SCREEN METHODS (separation into separate module in the works):
     def screen_setup(self):
         """
-        Sets up the game screen using the dimensions of the primary monitor or
-         defaults to hardcoded values in case of an error.
+        Sets up the game screen using the dimensions of the primary monitor or defaults
+         to hardcoded values in case of an error. This method attempts to dynamically
+         determine the monitor resolution but will revert to defaults if any issues occur.
+
+        :raises Exception: Describes what kind of exceptions can be expected if monitor
+                 information cannot be retrieved.
+        :return: None
         """
         self.scr = Screen()
         self.scr.title("Turtle Invaders")
@@ -185,11 +188,11 @@ class TurtleInvaders:
         Reverses the direction of invader movement when they reach the screen edge.
         The movement speed also slightly increases.
         """
-        if self.invaders_march_speed < 1:
-            self.invaders_march_speed -= 1
+        if self.invaders_main_march_speed < 1:
+            self.invaders_main_march_speed -= 1
         else:
-            self.invaders_march_speed += 1
-        self.invaders_march_speed *= -self.invaders_march_speed_increase
+            self.invaders_main_march_speed += 1
+        self.invaders_main_march_speed *= -self.invaders_main_march_speed_increase
 
     def lr_rl_flag_reset(self):
         """
@@ -216,10 +219,13 @@ class TurtleInvaders:
 
     def invader_bomb_deploy(self, bomb_element):
         """
-        Deploys a bomb from an invader position.
+        Deploys a bomb from an invader's position, initializing and configuring a
+         new bomb Turtle object. This method is typically called when an invader is
+         eligible to drop a bomb based on game logic defined in `invaders_main_march`.
 
-        :param bomb_element: The invader from which the bomb is dropped.
+        :param bomb_element: The invader Turtle object from which the bomb is deployed.
         :type bomb_element: Turtle
+        :return: None
         """
         self.invader_has_fired = True
         invader_bomb = Turtle()
@@ -233,68 +239,105 @@ class TurtleInvaders:
         self.scr.ontimer(self.invader_has_fired_flag_reset,
                          random.randint(*self.invader_bomb_freq))
 
-    def invaders_march(self):
+    def invaders_main(self):
         """
-        Handles the movement of invaders across the screen and their interaction with
-        the game environment (player, shields, game boundaries).
-        """
-        # Restart game if all invaders destroyed:
-        if len(self.invaders_all) == 0:
-            self.game_lives_left = 0  # Condition for end of game/restart
+        Manages the primary behavior of invaders during gameplay, including their
+         movement across the screen, and interactions with player defenses and
+         game boundaries.
 
-        # End game if invaders make contact with shields:
+        Invaders move in formation and this method checks to restart the game if
+         all invaders are destroyed or if they reach the shield boundary. It also
+         handles directional changes when invaders reach screen edges.
+
+        :return: None
+        """
+        if len(self.invaders_all) == 0:  # Restart game if all invaders destroyed
+            self.game_lives_left = 0  # Condition for end of game/restart
+        # Restart game if invaders make contact with shields:
         if min([i.ycor() for i in self.invaders_all]) - 17.5 <= self.shields_y_boundary:
             self.game_lives_left = 0
-
-        # `- 30` allows accuracy in left screen limit:
-        min_x = min([i.xcor() for i in self.invaders_all]) - 30
-        # `+ 35` allows accuracy in right screen limit:
-        max_x = max([i.xcor() for i in self.invaders_all]) + 35
+        min_x = min([i.xcor() for i in self.invaders_all]) - 30  # `30` for fine-tuning
+        max_x = max([i.xcor() for i in self.invaders_all]) + 35  # `35` for fine-tuning
         if (min_x < -self.scr_w_half or max_x > self.scr_w_half) and not self.lr_rl:
             self.invaders_reverse()
         else:
             self.invader_vert_now = 0
+        self.invaders_main_march()  # Iterates over each invader
 
-        # Creates 'living' effect for invaders:
+    def invaders_main_march(self):
+        """
+        Manages the movement of all invaders on the screen, giving a 'living' effect
+         with a slight random stretch. This method also triggers the deployment of
+         bombs by invaders, starting with a random invader if no bombs have been
+         deployed yet.
+
+        This method also updates the saucer frequency tracker based on the invader
+         movement, affecting the timing of saucer appearances.
+
+        :return: None
+        """
+        # Random stretch creates 'living' effect for invaders:
         rand_stretch = 1 + random.randint(71, 79) / 100
         for invader in self.invaders_all:
-            # SAUCER freq tied to invader marching:
+            # saucer freq tied to invader marching:
             self.saucer_freq_tracker += self.game_tracer_val / 10000
             invader.turtlesize(stretch_wid=rand_stretch, stretch_len=rand_stretch)
-            invader.teleport(invader.xcor() - self.invaders_march_speed,
+            invader.teleport(invader.xcor() - self.invaders_main_march_speed,
                              invader.ycor() - self.invader_vert_now)
-
-            # Chooses first to fire randomly from list:
-            if not self.invader_bomb_barrage_begun:
+            if not self.invader_bomb_barrage_begun:  # Random invader fires first
                 first = random.choice(self.invaders_all)
                 self.invader_bomb_barrage_begun = True
                 self.invader_bomb_deploy(first)
             elif not self.invader_has_fired:
                 self.invader_bomb_deploy(invader)
+            self.invaders_main_march_bomb()  # Handles bomb iteration/functionality
 
-            for bomb in self.invader_bombs:
-                bomb.goto(bomb.xcor(), bomb.ycor() - self.invader_bomb_speed)
-                if bomb.ycor() < -self.scr_h_half:
-                    bomb.goto(1500, 1500)
-                    self.invader_bombs.remove(bomb)
-                    del bomb
-                elif are_collision_x_y_cond_met(self.player, bomb, 40, 30):
-                    self.player_destroyed()
-                # Check friendly-fire and degrade shields accordingly:
+    def invaders_main_march_bomb(self):
+        """
+        Handles the movement and collision checking of bombs dropped by the invaders.
+         This method moves each bomb downward, removes bombs that have left the screen,
+         and checks for collisions with the player and shields.
+
+        If a bomb hits the player, the `player_destroyed` method is triggered. Bomb
+         collisions with shields trigger damage to the shield.
+
+        :return: None
+        """
+        for bomb in self.invader_bombs:
+            bomb.goto(bomb.xcor(), bomb.ycor() - self.invader_bomb_speed)
+            if bomb.ycor() < -self.scr_h_half:
+                bomb.goto(1500, 1500)
+                self.invader_bombs.remove(bomb)
+                del bomb
+            elif are_collision_x_y_cond_met(self.player, bomb, 40, 30):
+                self.player_destroyed()
+            # Check friendly-fire and degrade shields accordingly:
+            else:
+                self.invaders_main_march_bomb_shields(bomb)
+
+    def invaders_main_march_bomb_shields(self, bomb):
+        """
+        Checks for and handles collisions between invader bombs and player shields.
+         If a bomb hits a shield, the shield's integrity is reduced or the shield is
+         removed if fully degraded.
+
+        :param bomb: The bomb to check for collisions with shields.
+        :type bomb: Turtle
+        :return: None
+        """
+        for shield in self.shields_all:
+            if are_collision_x_y_cond_met(shield, bomb, 20, 22.5):
+                bomb.goto(1500, 1500)
+                ind_j = self.invader_bombs.index(bomb)
+                del_i = self.invader_bombs.pop(ind_j)  # noqa
+                del del_i
+                new_ind = SHIELD_STAGES.index(shield.color()[0]) + 1
+                if new_ind <= len(SHIELD_STAGES) - 1:
+                    shield.color(SHIELD_STAGES[new_ind])
                 else:
-                    for shield in self.shields_all:
-                        if are_collision_x_y_cond_met(shield, bomb, 20, 22.5):
-                            bomb.goto(1500, 1500)
-                            ind_j = self.invader_bombs.index(bomb)
-                            del_i = self.invader_bombs.pop(ind_j)  # noqa
-                            del del_i
-                            new_ind = SHIELD_STAGES.index(shield.color()[0]) + 1
-                            if new_ind <= len(SHIELD_STAGES) - 1:
-                                shield.color(SHIELD_STAGES[new_ind])
-                            else:
-                                shield.goto(1500, 1500)
-                                self.shields_all.remove(shield)
-                                del shield
+                    shield.goto(1500, 1500)
+                    self.shields_all.remove(shield)
+                    del shield
 
     def invader_has_fired_flag_reset(self):
         """
@@ -410,9 +453,16 @@ class TurtleInvaders:
 
     def player_missile_path(self):
         """
-        Updates the position of each missile fired by the player. Checks if missiles
-         have left the game screen or hit an invader or the saucer. Removes missiles
-         that have left the screen or made a hit.
+        Controls the movement and collision detection of missiles fired by the player.
+         This method updates the position of each missile, checks for screen boundaries,
+         and handles collisions with invaders, saucers, and shields.
+
+        Missiles are moved upwards from their current position, and checks are performed
+         to remove missiles that exceed the game screen or hit a target. Collisions with
+         different game elements like invaders or saucers affect the game score or player
+         capabilities.
+
+        :return: None
         """
         for missile in self.player_missiles_all:
             player_x, player_y = missile.xcor(), missile.ycor()
@@ -421,51 +471,89 @@ class TurtleInvaders:
                 self.player_missiles_all.remove(missile)
                 del missile
             else:
-                for invader in self.invaders_all:
-                    if are_collision_x_y_cond_met(invader, missile, 15, 10):
-                        self.game_score_current += 10  # 10 points for hitting invader
-                        self.game_score_update()
-                        missile.goto(1500, 1500)
-                        ind_i = self.player_missiles_all.index(missile)
-                        del_m = self.player_missiles_all.pop(ind_i)  # noqa
-                        del del_m
-                        invader.goto(1500, 1500)
-                        self.invaders_all.remove(invader)
-                        del invader
-                if are_collision_x_y_cond_met(self.saucer, missile, 35, 15):
-                    missile.goto(1500, 1500)
-                    ind_i = self.player_missiles_all.index(missile)
-                    del_m = self.player_missiles_all.pop(ind_i)  # noqa
-                    del del_m
-                    self.game_score_current += 100  # Get 100 points for saucer hit
-                    self.game_score_update()
-                    self.saucer_x = self.scr_w_half + 50
-                    self.saucer.teleport(self.saucer_x, self.saucer_y)
-                    # Heal shields for 'classic' saucer hit:
-                    if self.saucer.shape() == 'classic':
-                        for k in self.shields_all:
-                            k.color(SHIELD_STAGES[0])
-                    # Bonus 10 second rapid fire for 'circle' saucer hit:
-                    elif self.saucer.shape() == 'circle':
-                        self.player_reload_time = int(self.player_reload_time * .5)
-                        self.scr.ontimer(self.player_reload_time_reset, 10000)
-                    self.saucer_freq_tracker = 0
-                    self.saucer_freq = random.randint(self.saucer_freq_low,
-                                                      self.saucer_freq_high)
-                # Check for friendly-fire and degrade shields accordingly:
-                for shield in self.shields_all:
-                    if are_collision_x_y_cond_met(shield, missile, 25, 20):
-                        missile.goto(1500, 1500)
-                        ind_i = self.player_missiles_all.index(missile)
-                        to_del = self.player_missiles_all.pop(ind_i)  # noqa
-                        del to_del
-                        new_ind = SHIELD_STAGES.index(shield.color()[0]) + 1
-                        if new_ind <= len(SHIELD_STAGES) - 1:
-                            shield.color(SHIELD_STAGES[new_ind])
-                        else:
-                            shield.goto(1500, 1500)
-                            self.shields_all.remove(shield)
-                            del shield
+                self.player_missile_path_invader_collision(missile)
+                self.player_missile_path_saucer_collision(missile)
+                self.player_missile_path_shields_collision(missile)
+
+    def player_missile_path_invader_collision(self, missile):
+        """
+        Handles collisions between the player's missiles and invaders. When a collision
+         is detected, the invader is removed from the game, the player's score is
+         updated, and the missile is removed from play.
+
+        :param missile: The missile to check for collisions with invaders.
+        :type missile: Turtle
+        :return: None
+        """
+        for invader in self.invaders_all:
+            if are_collision_x_y_cond_met(invader, missile, 15, 10):
+                self.game_score_current += 10  # 10 points for hitting invader
+                self.game_score_update()
+                missile.goto(1500, 1500)
+                ind_i = self.player_missiles_all.index(missile)
+                del_m = self.player_missiles_all.pop(ind_i)  # noqa
+                del del_m
+                invader.goto(1500, 1500)
+                self.invaders_all.remove(invader)
+                del invader
+
+    def player_missile_path_saucer_collision(self, missile):
+        """
+        Handles collisions between the player's missiles and the saucer. A successful
+         hit results in a significant increase in the player's score and triggers
+         specific effects depending on the saucer's type. This method also handles the
+         removal of the missile from play and updates the saucer's position.
+
+        :param missile: The missile to check for collisions with the saucer.
+        :type missile: Turtle
+        :return: None
+        """
+        if are_collision_x_y_cond_met(self.saucer, missile, 35, 15):
+            missile.goto(1500, 1500)
+            ind_i = self.player_missiles_all.index(missile)
+            del_m = self.player_missiles_all.pop(ind_i)  # noqa
+            del del_m
+            self.game_score_current += 100  # Get 100 points for saucer hit
+            self.game_score_update()
+            self.saucer_x = self.scr_w_half + 50
+            self.saucer.teleport(self.saucer_x, self.saucer_y)
+            # Heal shields for 'classic' saucer hit:
+            if self.saucer.shape() == 'classic':
+                for k in self.shields_all:
+                    k.color(SHIELD_STAGES[0])
+            # Bonus 10 second rapid fire for 'circle' saucer hit:
+            elif self.saucer.shape() == 'circle':
+                self.player_reload_time = int(self.player_reload_time * .5)
+                self.scr.ontimer(self.player_reload_time_reset, 10000)
+            self.saucer_freq_tracker = 0
+            self.saucer_freq = random.randint(self.saucer_freq_low,
+                                              self.saucer_freq_high)
+
+    def player_missile_path_shields_collision(self, missile):
+        """
+        Manages the interaction between player-fired missiles and the defensive shields.
+         If a missile hits a shield, the shield's integrity is reduced, changing its
+         color. If the shield's integrity is fully depleted, the shield is removed from
+         the game.
+
+        :param missile: The missile to check for collisions with shields.
+        :type missile: Turtle
+        :return: None
+        """
+        # Check for friendly-fire and degrade shields accordingly:
+        for shield in self.shields_all:
+            if are_collision_x_y_cond_met(shield, missile, 25, 20):
+                missile.goto(1500, 1500)
+                ind_i = self.player_missiles_all.index(missile)
+                to_del = self.player_missiles_all.pop(ind_i)  # noqa
+                del to_del
+                new_ind = SHIELD_STAGES.index(shield.color()[0]) + 1
+                if new_ind <= len(SHIELD_STAGES) - 1:
+                    shield.color(SHIELD_STAGES[new_ind])
+                else:
+                    shield.goto(1500, 1500)
+                    self.shields_all.remove(shield)
+                    del shield
 
     def player_reload_time_reset(self):
         """
@@ -565,16 +653,23 @@ class TurtleInvaders:
 
     def game_pause_toggle(self):
         """
-        Toggles the pause state of the game. This method is bound to a keypress
-         and allows the player to pause/resume the game dynamically.
+        Toggles the pause state of the game. This method is bound to a keypress and
+         can be used to pause/resume the game.
+
+        Example:
+            game_instance.game_pause_toggle()  # This would toggle the pause state
+                                                  based on the current state.
+
+        :return: None
         """
         self.game_is_paused = not self.game_is_paused
 
     def game_listeners(self):
         """
         Sets up the key listeners for the game, binding specific game actions to
-         keyboard keys. This method enables player interaction with the game using
-         the keyboard.
+         keyboard keys. This allows player interaction using the keyboard.
+
+        :return: None
         """
         self.scr.listen()
         self.scr.onkeypress(self.player_fire_missile, 'space')
@@ -657,7 +752,7 @@ class TurtleInvaders:
         while self.game_is_on:
             if not self.game_is_paused and self.game_lives_left > 0:
                 self.scr.update()
-                self.invaders_march()
+                self.invaders_main()
                 self.player_missile_path()
                 self.saucer_flyby()
             elif self.game_lives_left > 0:
@@ -676,6 +771,8 @@ if __name__ == "__main__":
         sys.exit(1)  # Properly handle unexpected exits.
 
 # Things to do:
+#  - Separate Invaders/Player/Screen/Shields methods into separate modules!!
+
 #  - Figure out anomalous cases where invaders march straight down, e.g. happens
 #     first time invaders hit right wall if march initializes to the right.
 
@@ -687,14 +784,6 @@ if __name__ == "__main__":
 #  - Change player shape from square to triangle & make trig algo for collision
 #     with player triangle. Use `print(self.player.get_shapepoly())` to see shape
 #     boundaries -- returns: ((40.0, -11.54), (0.0, 23.1), (-40.0, -11.54)).
-
-#  - Make one type of saucer provide points bonus, the other (more rare frequency)
-#       have bonus of refreshing shields to max value/color.
-
-#  - Consider healing shields one color stage for saucer hit:
-#     curr_color_ind = SHIELD_STAGES.index(k.color()[0])
-#     heal_color_ind = max(0, curr_color_ind - 1)
-#     k.color(SHIELD_STAGES[heal_color_ind])
 
 #  - Add functionality for subsequent rounds.
 
@@ -708,8 +797,6 @@ if __name__ == "__main__":
 #  - For development, to identify invader indices easily:
 #     invader.write(i, align="center", font=("Source Sans 3 Black", 24, "italic"))
 
-#  - Rule out necessity of `self.scr.colormode(255)`
-
-#  - Methods for future ref: self.scr.window_width(), self.scr.window_height()
+#  - Methods for future development ref: self.scr.window_width(), self.scr.window_height()
 
 #  - Display directions and indications of saucer bonuses on initial greet screen

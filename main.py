@@ -20,10 +20,12 @@ class TurtleInvaders:
         self.game_tracer_val = 20
 
         # INVADER ATTRIBUTES:
+        self.invaders_y_limit = 50  # Higher val shifts formation up along y-axis
+        self.invaders_vert_compress = 3  # Higher val to compress rows along y-axis
         self.invaders_all = []
         self.invader_formation_div_x = 6
         self.invader_formation_div_y = 4
-        self.invader_formation_gutter_factor = .7  # Smaller val = bigger L-R gutters
+        self.invader_gutter_factor = .7  # Smaller val = bigger L-R gutters
         self.invader_pos_all = []
         self.invaders_march_speed = 1
         self.invaders_march_speed_increase = .5
@@ -34,8 +36,8 @@ class TurtleInvaders:
         self.invader_bomb_speed = 1
         self.invader_has_fired = False
         self.invader_bomb_barrage_begun = False
-        self.invader_bomb_low_init = 500  # ~ 1/2 second
-        self.invader_bomb_high_init = 5000  # ~5 seconds
+        self.invader_bomb_low_init = 500  # ~ 1/2 second (divide by 1000)
+        self.invader_bomb_high_init = 5000  # ~5 seconds (divide by 1000)
         self.invader_bomb_low = self.invader_bomb_low_init
         self.invader_bomb_high = self.invader_bomb_high_init
         self.invader_bomb_freq = (self.invader_bomb_low, self.invader_bomb_high)
@@ -48,7 +50,7 @@ class TurtleInvaders:
         self.player_has_fired = False
         self.player_reload_time_init = 1000  # 1 second
         self.player_reload_time = self.player_reload_time_init
-        self.player_missile_speed = 10
+        self.player_missile_speed = 15
 
         # SAUCER ATTRIBUTES:
         self.saucer = None
@@ -72,6 +74,8 @@ class TurtleInvaders:
         self.scr_h_half = None
 
         # SHIELDS ATTRIBUTES:
+        self.shield_num = 3
+        self.shield_blocks_num = 4
         self.shields_all = []
         self.shields_y_boundary = None
 
@@ -164,8 +168,7 @@ class TurtleInvaders:
         # Creates 'living' effect for invaders:
         rand_stretch = 1 + random.randint(71, 79) / 100
         for i in self.invaders_all:
-            # SAUCER freq tied to invader marching. The following equation makes
-            #  self.saucer_freq_tracker increment approx 1.0 per second:
+            # SAUCER freq tied to invader marching:
             self.saucer_freq_tracker += self.game_tracer_val / 10000
             i.turtlesize(stretch_wid=rand_stretch, stretch_len=rand_stretch)
             i.teleport(i.xcor() - self.invaders_march_speed,
@@ -179,55 +182,37 @@ class TurtleInvaders:
             elif not self.invader_has_fired:
                 self.invader_bomb_deploy(i)
 
-            #                   # # #                   #
-            # #              # # # # # #              # #
-            # # #          # # # # # # # #          # # #
-            # # # #      # # # # # # # # # #      # # # #
-            # # # # #   # #   # # # # #   # #   # # # # #
-            # # # # # # # #  RESUME HERE  # # # # # # # #
-            # # # # #   # # #   # # #   # # #   # # # # #
-            # # # #      # # # # # # # # # #      # # # #
-            # # #          # # # # # # # #          # # #
-            # #              # # # # # #              # #
-            #                   # # #                   #
-
             for j in self.invader_bombs:
                 j.goto(j.xcor(), j.ycor() - self.invader_bomb_speed)
                 if j.ycor() < -self.scr_h_half:
                     j.goto(1500, 1500)
-                    # noinspection PyUnusedLocal
-                    del_i = self.invader_bombs.pop(self.invader_bombs.index(j))
+                    del_i = self.invader_bombs.pop(self.invader_bombs.index(j))  # noqa
                     del del_i
-                # ((40.0, -30.0), (40.0, 30.0), (-40.0, 30.0), (-40.0, -30.0))
                 if are_collision_x_y_cond_met(self.player, j, 40, 30):
                     self.player_destroyed()
                 # Check friendly-fire and degrade shields accordingly:
                 for shield in self.shields_all:
-                    # poly: ((20.0, -22.5), (20.0, 22.5), (-20.0, 22.5), (-20.0, -22.5))
                     if are_collision_x_y_cond_met(shield, j, 20, 22.5):
                         j.goto(1500, 1500)
-                        # noinspection PyUnusedLocal
-                        del_i = self.invader_bombs.pop(self.invader_bombs.index(j))
+                        ind_j = self.invader_bombs.index(j)
+                        del_i = self.invader_bombs.pop(ind_j)  # noqa
                         del del_i
-                        curr_ind = SHIELD_STAGES.index(shield.color()[0])
-                        new_ind = curr_ind + 1
+                        new_ind = SHIELD_STAGES.index(shield.color()[0]) + 1
                         if new_ind <= len(SHIELD_STAGES) - 1:
-                            new_color = SHIELD_STAGES[new_ind]
-                            shield.color(new_color)
+                            shield.color(SHIELD_STAGES[new_ind])
                         else:
                             shield.goto(1500, 1500)
-                            # noinspection PyUnusedLocal
-                            del_s = self.shields_all.pop(self.shields_all.index(shield))
+                            ind_shield = self.shields_all.index(shield)
+                            del_s = self.shields_all.pop(ind_shield)  # noqa
                             del del_s
 
     def invader_has_fired_flag_reset(self):
         self.invader_has_fired = False
 
     def invader_get_positions(self):
-        invader_formation_width = self.scr_w * self.invader_formation_gutter_factor
+        invader_formation_width = self.scr_w * self.invader_gutter_factor
         invader_grid_width = invader_formation_width / self.invader_formation_div_x
         invader_grid_height = self.scr_h / self.invader_formation_div_y
-
         for x in range(self.invader_formation_div_x):
             for y in range(self.invader_formation_div_y):
                 start_x = -invader_formation_width / 2
@@ -235,27 +220,26 @@ class TurtleInvaders:
                 center_x = invader_grid_width / 2
                 pos_x = start_x + spacing_x + center_x
 
-                # Add higher number to shift formation higher along y-axis:
-                start_y = -invader_grid_height / 2 + 50
-                # Make divisor larger to compress rows along on y-axis:
-                spacing_y = invader_grid_height * y / 3
+                start_y = -invader_grid_height / 2 + self.invaders_y_limit
+                spacing_y = invader_grid_height * y / self.invaders_vert_compress
                 center_y = invader_grid_height / 2
                 pos_y = start_y + spacing_y + center_y
 
                 self.invader_pos_all.append((pos_x, pos_y))
 
+    #    # #    # #  # #   # #    #
+    #  # # #  RESUME HERE  # # #  #
+    #    # #    # #  # #   # #    #
     def invader_formation(self):
         for i in range(len(self.invader_pos_all)):
             single_invader = Turtle()
             single_invader.shape('turtle')
-            single_invader.speed('slowest')
             single_invader.turtlesize(stretch_wid=1.75, stretch_len=1.75)
             color_ind = invader_get_row_index(i, self.game_round_current)
             single_invader.color(TURTLE_COLORS[color_ind])
             single_invader.penup()
             single_invader.setheading(270)
-            single_invader.goto(self.invader_pos_all[i][0],
-                                self.invader_pos_all[i][1])
+            single_invader.goto(self.invader_pos_all[i][0], self.invader_pos_all[i][1])
             self.invaders_all.append(single_invader)
 
     # PLAYER METHODS:
@@ -301,16 +285,15 @@ class TurtleInvaders:
             player_missile.goto(self.player.xcor(), self.player.ycor() + 35)
             self.player_missiles_all.append(player_missile)
             self.player_has_fired = True
-            self.scr.ontimer(self.reset_player_has_fired_flag,
-                             self.player_reload_time)
+            self.scr.ontimer(self.reset_player_has_fired_flag, self.player_reload_time)
 
     def player_missile_path(self):
         for i in self.player_missiles_all:
             player_x, player_y = i.xcor(), i.ycor()
             i.goto(player_x, player_y + self.player_missile_speed)
             if player_y > self.scr_h_half:
-                # noinspection PyUnusedLocal
-                to_del = self.player_missiles_all.pop(self.player_missiles_all.index(i))
+                ind_i = self.player_missiles_all.index(i)
+                to_del = self.player_missiles_all.pop(ind_i)  # noqa
                 del to_del
             else:
                 for j in self.invaders_all:
@@ -319,18 +302,16 @@ class TurtleInvaders:
                         self.game_score_update()
                         i.goto(1500, 1500)
                         j.goto(1500, 1500)
-                        # noinspection PyUnusedLocal
-                        del_m = self.player_missiles_all.pop(
-                            self.player_missiles_all.index(i))
+                        ind_i = self.player_missiles_all.index(i)
+                        del_m = self.player_missiles_all.pop(ind_i)  # noqa
                         del del_m
-                        # noinspection PyUnusedLocal
-                        del_t = self.invaders_all.pop(self.invaders_all.index(j))
+                        ind_j = self.invaders_all.index(j)
+                        del_t = self.invaders_all.pop(ind_j)  # noqa
                         del del_t
                 if are_collision_x_y_cond_met(self.saucer, i, 35, 15):
                     i.goto(1500, 1500)
-                    # noinspection PyUnusedLocal
-                    del_m = self.player_missiles_all.pop(
-                        self.player_missiles_all.index(i))
+                    ind_i = self.player_missiles_all.index(i)
+                    del_m = self.player_missiles_all.pop(ind_i)  # noqa
                     del del_m
                     # Get 100 points for SAUCER hit:
                     self.game_score_current += 100
@@ -353,19 +334,16 @@ class TurtleInvaders:
                 for shield in self.shields_all:
                     if are_collision_x_y_cond_met(shield, i, 25, 20):
                         i.goto(1500, 1500)
-                        # noinspection PyUnusedLocal
-                        to_del = self.player_missiles_all.pop(
-                            self.player_missiles_all.index(i))
+                        ind_i = self.player_missiles_all.index(i)
+                        to_del = self.player_missiles_all.pop(ind_i)  # noqa
                         del to_del
-                        curr_ind = SHIELD_STAGES.index(shield.color()[0])
-                        new_ind = curr_ind + 1
+                        new_ind = SHIELD_STAGES.index(shield.color()[0]) + 1
                         if new_ind <= len(SHIELD_STAGES) - 1:
-                            new_color = SHIELD_STAGES[new_ind]
-                            shield.color(new_color)
+                            shield.color(SHIELD_STAGES[new_ind])
                         else:
                             shield.goto(1500, 1500)
-                            # noinspection PyUnusedLocal
-                            del_s = self.shields_all.pop(self.shields_all.index(shield))
+                            ind_shield = self.shields_all.index(shield)
+                            del_s = self.shields_all.pop(ind_shield)  # noqa
                             del del_s
 
     def player_reload_time_reset(self):
@@ -377,31 +355,25 @@ class TurtleInvaders:
         use fewer large shield blocks and degrade them with visual cue of less
         bright color when hit with enemy missile: let color fade on each hit until
         it's gone."""
-        shield_num = 3
-
         # Shield x stuff:
-        shield_div_x = self.scr_w / (shield_num + 1)
+        shield_div_x = self.scr_w / (self.shield_num + 1)
         shield_grid_x = -self.scr_w_half + shield_div_x
         shield_bits_spacing = 46
-        shield_bits_x_num = 4
-        shield_width = shield_bits_x_num * shield_bits_spacing
-
-        # Shield y stuff:
-        shield_grid_y = -self.scr_h_half + self.scr_h / 5.25
+        shield_width = self.shield_blocks_num * shield_bits_spacing
 
         # Create shield bits:
         stretch_length = 2.25
         stretch_factor = stretch_length * 20 / 2
-        for i in range(shield_num):
+        for i in range(self.shield_num):
             # Center each shield div:
             shield_x_begin = shield_grid_x - shield_width / 2 + stretch_factor
-            for j in range(shield_bits_x_num):
+            for j in range(self.shield_blocks_num):
                 shield = Turtle()
                 shield.penup()
                 shield.shape('square')
                 shield.turtlesize(stretch_wid=2, stretch_len=stretch_length, outline=0)
                 shield.color(SHIELD_STAGES[0])
-                shield.goto(shield_x_begin, shield_grid_y)
+                shield.goto(shield_x_begin, -self.scr_h_half + self.scr_h / 5.25)
                 self.shields_all.append(shield)
                 shield_x_begin += shield_bits_spacing
             shield_grid_x += shield_div_x
@@ -417,20 +389,16 @@ class TurtleInvaders:
 
         saucer_ind = random.randint(0, 1)
 
-        heading_uptions = [0, 270]
-        self.saucer.setheading(heading_uptions[saucer_ind])
+        self.saucer.setheading([0, 270][saucer_ind])
 
-        shape_options = ['circle', 'classic']
-        self.saucer_shape_current = shape_options[saucer_ind]
+        self.saucer_shape_current = ['circle', 'classic'][saucer_ind]
         self.saucer.shape(self.saucer_shape_current)
 
         size_options = [(.6, 3.25, 10), (8.5, 2.5, 5)][saucer_ind]
         self.saucer.turtlesize(*size_options)
 
         self.saucer_x = self.scr_w_half + 50
-        pos_y_divs = [10, 8.75]
-        self.saucer_y = self.scr_h_half - self.scr_h / pos_y_divs[
-            saucer_ind]
+        self.saucer_y = self.scr_h_half - self.scr_h / [10, 8.75][saucer_ind]
         self.saucer.goto(self.saucer_x, self.saucer_y)
 
     def saucer_flyby(self):
@@ -484,9 +452,8 @@ class TurtleInvaders:
         self.game_score_object.penup()
         self.game_score_object.hideturtle()
         self.game_score_object.color(PLAYER_COLOR)
-        pos_x = -self.scr_w_half + self.scr_w / 20
-        pos_y = self.scr_h_half - self.scr_h / 15
-        self.game_score_object.goto(pos_x, pos_y)
+        self.game_score_object.goto(-self.scr_w_half + self.scr_w / 20,
+                                    self.scr_h_half - self.scr_h / 15)
         self.game_score_object.write(f"{self.game_score_current:04d}",
                                      align="center",
                                      font=("Source Sans 3 Black", 32, "italic"))
@@ -501,9 +468,8 @@ class TurtleInvaders:
         self.game_lives_object.hideturtle()
         self.game_lives_object.color(PLAYER_COLOR)
         shift_factor = (self.game_lives_left - 1) * self.scr_w / 95
-        pos_x = self.scr_w_half - self.scr_w / 50 - shift_factor
-        pos_y = self.scr_h_half - self.scr_h / 15
-        self.game_lives_object.goto(pos_x, pos_y)
+        self.game_lives_object.goto(self.scr_w_half - self.scr_w / 50 - shift_factor,
+                                    self.scr_h_half - self.scr_h / 15)
         self.game_lives_object.write("■" * (self.game_lives_left - 1),
                                      align="center",
                                      font=("Source Sans 3 Black", 32, "italic"))
@@ -535,7 +501,6 @@ class TurtleInvaders:
                 self.saucer_flyby()
             elif self.game_lives_left > 0:
                 self.scr.update()
-                pass
             else:
                 self.game_lives_update()
                 self.game_score_update()
@@ -586,3 +551,5 @@ if __name__ == "__main__":
 #  - Rule out necessity of `self.scr.colormode(255)`
 
 #  - Methods for future ref: self.scr.window_width(), self.scr.window_height()
+
+#  - Display directions and indications of saucer bonuses on initial greet screen

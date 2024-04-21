@@ -56,6 +56,3 @@ def are_collision_x_y_cond_met(obj, missile, space_x, space_y):
     x_cond_met = is_collision_x_cond_met(obj, missile, space_x)
     y_cond_met = is_collision_y_cond_met(obj, missile, space_y)
     return x_cond_met and y_cond_met
-
-# Things to do:
-#  - Subtract/add half vertical shape length to get 'tip' of missile.

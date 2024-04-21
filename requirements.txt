@@ -1,1 +1,1 @@
- screeninfo>=0.8.1
+screeninfo>=0.8.1

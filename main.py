@@ -171,7 +171,7 @@ class TurtleInvaders:
             self.scr_h_half = self.scr_h / 2
             pos_x = (monitor_width - self.scr_w) // 2
             pos_y = (monitor_height - self.scr_h) // 2
-        except (Exception,) as e:
+        except (IndexError, Exception) as e:
             print(f"get_monitors() error: {e}")
             # Hard code in case of error:
             self.scr_w = 1920
@@ -764,39 +764,9 @@ class TurtleInvaders:
 
 
 if __name__ == "__main__":
+    help(TurtleInvaders)
     try:
         turtle_invaders = TurtleInvaders()
         turtle_invaders.game_begin_invasion()
     except (KeyboardInterrupt, Exception):
         sys.exit(1)  # Properly handle unexpected exits.
-
-# Things to do:
-#  - Separate Invaders/Player/Screen/Shields methods into separate modules!!
-
-#  - Figure out anomalous cases where invaders march straight down, e.g. happens
-#     first time invaders hit right wall if march initializes to the right.
-
-# - Get setheading() for all objects aligned so stretch_len and stretch_wid mean
-#      the same thing.
-
-#  - Work on algo to see direct relation of tracer to seconds.
-
-#  - Change player shape from square to triangle & make trig algo for collision
-#     with player triangle. Use `print(self.player.get_shapepoly())` to see shape
-#     boundaries -- returns: ((40.0, -11.54), (0.0, 23.1), (-40.0, -11.54)).
-
-#  - Add functionality for subsequent rounds.
-
-#  - Remedy names/concerns regarding game restart -- come up with better cases for
-#     while loop, diversify functionality
-
-#  - Add code for bonus lives at 1000s.
-
-#  - Use get_shapepoly(), shapesize() for development analysis.
-
-#  - For development, to identify invader indices easily:
-#     invader.write(i, align="center", font=("Source Sans 3 Black", 24, "italic"))
-
-#  - Methods for future development ref: self.scr.window_width(), self.scr.window_height()
-
-#  - Display directions and indications of saucer bonuses on initial greet screen
